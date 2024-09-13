@@ -51,7 +51,16 @@ circle = Entity(
     model='circle',
     color=color.white,
     scale=0.2,
-    position=(2, 5),  # Slightly raised to prevent z-fighting
+    position=(-2, 3),  # Slightly raised to prevent z-fighting
+    collider='sphere'  # Add a box collider to the square
+)
+
+# Create another circle on the platform
+circle1 = Entity(
+    model='circle',
+    color=color.white,
+    scale=0.2,
+    position=(-3, 4),  # Slightly raised to prevent z-fighting
     collider='sphere'  # Add a box collider to the square
 )
 
@@ -60,7 +69,25 @@ circle2 = Entity(
     model='circle',
     color=color.white,
     scale=0.2,
-    position=(3, 8),  # Slightly raised to prevent z-fighting
+    position=(-2, 4),  # Slightly raised to prevent z-fighting
+    collider='sphere'  # Add a box collider to the square
+)
+
+# Create another circle on the platform
+circle3 = Entity(
+    model='circle',
+    color=color.white,
+    scale=0.2,
+    position=(3, 4),  # Slightly raised to prevent z-fighting
+    collider='sphere'  # Add a box collider to the square
+)
+
+# Create another circle on the platform
+circle4 = Entity(
+    model='circle',
+    color=color.white,
+    scale=0.2,
+    position=(1, 4),  # Slightly raised to prevent z-fighting
     collider='sphere'  # Add a box collider to the square
 )
 
@@ -77,16 +104,7 @@ class Barrier():
 # Initialize the barrier
 barrier_object = Barrier(0.5)
 
-def keep_in_bounds(circle, circle2, square):
-    top_circle = circle.y + circle.scale_y / 2
-    bottom_circle = circle.y - circle.scale_y / 2
-    right_circle = circle.x + circle.scale_x / 2
-    left_circle = circle.x - circle.scale_x / 2
-
-    top_circle2 = circle2.y + circle2.scale_y / 2
-    bottom_circle2 = circle2.y - circle2.scale_y / 2
-    right_circle2 = circle2.x + circle2.scale_x / 2
-    left_circle2 = circle2.x - circle2.scale_x / 2
+def keep_in_bounds(agents, square):
 
     top_square = square.y + square.scale_y / 2
     bottom_square = square.y - square.scale_y / 2
@@ -98,24 +116,30 @@ def keep_in_bounds(circle, circle2, square):
     right_platform = platform.x + platform.scale_x / 2
     left_platform = platform.x - platform.scale_x / 2
 
-    # Check if the circle is outside the platform
-    if top_circle > top_platform:
-        circle.y = top_platform - circle.scale_y / 2
-    elif bottom_circle < bottom_platform:
-        circle.y = bottom_platform + circle.scale_y / 2
-    if right_circle > right_platform:
-        circle.x = right_platform - circle.scale_x / 2
-    elif left_circle < left_platform:
-        circle.x = left_platform + circle.scale_x / 2
+    for agent in agents:
+        top_agent = agent.y + agent.scale_y / 2
+        bottom_agent = agent.y - agent.scale_y / 2
+        right_agent = agent.x + agent.scale_x / 2
+        left_agent = agent.x - agent.scale_x / 2
 
-    if top_circle2 > top_platform:
-        circle2.y = top_platform - circle2.scale_y / 2
-    elif bottom_circle2 < bottom_platform:
-        circle2.y = bottom_platform + circle2.scale_y / 2
-    if right_circle2 > right_platform:
-        circle2.x = right_platform - circle2.scale_x / 2
-    elif left_circle2 < left_platform:
-        circle2.x = left_platform + circle2.scale_x / 2
+        if top_agent > top_platform:
+            agent.y = top_platform - agent.scale_y / 2
+        elif bottom_agent < bottom_platform:
+            agent.y = bottom_platform + agent.scale_y / 2
+        if right_agent > right_platform:
+            agent.x = right_platform - agent.scale_x / 2
+        elif left_agent < left_platform:
+            agent.x = left_platform + agent.scale_x / 2
+
+    top_square = square.y + square.scale_y / 2
+    bottom_square = square.y - square.scale_y / 2
+    right_square = square.x + square.scale_x / 2
+    left_square = square.x - square.scale_x / 2
+
+    top_platform = platform.y + platform.scale_y / 2
+    bottom_platform = platform.y - platform.scale_y / 2
+    right_platform = platform.x + platform.scale_x / 2
+    left_platform = platform.x - platform.scale_x / 2
 
     # Check if the square is outside the platform
     if top_square > top_platform:
@@ -127,16 +151,66 @@ def keep_in_bounds(circle, circle2, square):
     elif left_square < left_platform:
         square.x = left_platform + square.scale_x / 2
 
-def search_for_box(agents, square):
-    for agent in agents:
-        facing_direction = agent.forward
-        print(facing_direction)
-        # ray = raycast(agent.position, facing_direction, distance=1, ignore=[agent, square])
-        # if ray.hit:
-        #     print("hit")
-        #     agent.position += facing_direction * time.dt * move_speed
-        # else:
-        #     print("no hit")
+def get_angle_between_two_lines(line1, line2):
+    f_point1 = [line1[0].x, line1[0].y]
+    f_point2 = [line1[1].x, line1[1].y]
+    s_point1 = [line2[0].x, line2[0].y]
+    s_point2 = [line2[1].x, line2[1].y]
+
+    # calculate the slope of the lines
+    m1 = (f_point2[1] - f_point1[1]) / ((f_point2[0] - f_point1[0]) + 0.0001)
+    m2 = (s_point2[1] - s_point1[1]) / ((s_point2[0] - s_point1[0]) + 0.0001)
+
+    # calculate the angle between the lines
+    angle = math.degrees(math.atan(abs((m2 - m1) / (1 + m1 * m2))))
+    return angle
+
+def search_cone(agent, square, cone_angle, cone_length):
+    facing_direction = agent.transform[1]
+    distance = Vec3(square.x - agent.x, square.y - agent.y, 0).length()
+    detected = False
+    if distance < cone_length:
+        # line of facing direction
+        face_line_1 = agent.position
+        z_angle = facing_direction[2]
+        dx = cone_length * math.cos(math.radians(z_angle))
+        dy = cone_length * math.sin(math.radians(z_angle))
+        x_new = agent.x + dx
+        y_new = agent.y + dy
+        face_line_2 = Vec3(x_new, y_new, z_angle)
+        face_line = [face_line_1, face_line_2]
+        # line to square
+        square_line_1 = agent.position
+        square_line_2 = Vec3(square.x, square.y, 0)
+        square_line = [square_line_1, square_line_2]
+
+        print("Face Line: ", face_line, " Square Line: ", square_line)
+
+        # calculate angle between two lines
+        angle = get_angle_between_two_lines(face_line, square_line)
+        # print("FD: ", facing_direction, " Angle: ", angle)
+        if angle < cone_angle:
+            print("Square detected")
+            agent.color = color.green
+            detected = True
+            return detected
+    if not detected:
+        agent.color = color.red
+        # rotate the agent and move it a bit 
+        new_rotation = (agent.rotation_z + 10) % 360
+        agent.rotation_z = new_rotation
+        # print new facing direction
+        # facing_direction = agent.forward
+        # print(agent.transform[1])
+        return detected
+
+def search_for_box(agent, square):
+    facing_direction = agent.transform[1]
+    print(facing_direction)
+    # Check for square within cone of vision
+    found = search_cone(agent, square, 45, 100)
+
+    return found
 
 def move_agents_keyboard(agents, keys):
     # Move the circle with WASD keys
@@ -182,39 +256,40 @@ def update():
         print("Success")
 
     # Check for collision with the square and push the square away
-    for index, agent in enumerate([circle, circle2]):
-        print("searching")
-        # search_for_box([circle, circle2], square)
-        square_direction = Vec3(square.x - agent.x, square.y - agent.y, 0)
-        agent.position += square_direction.normalized() * time.dt * move_speed
-        movement = square_direction.normalized() * time.dt * move_speed
-        if agent.intersects(square).hit:
-            max_square_direction = Vec3(0, 0, 0)
-            if abs(square_direction.x) > abs(square_direction.y):
-                max_square_direction.x = square_direction.x
-            else:
-                max_square_direction.y = square_direction.y
-
-            # Calculate the push direction based on the movement vector
-            # push_direction = move.normalized()  # Use the direction of movement
-            square.position += max_square_direction * time.dt * move_speed
-            if square.intersects(barrier).hit:
-                square.position -= max_square_direction * time.dt * move_speed
-
-            # Check for collision again to prevent overlapping
+    for index, agent in enumerate([circle, circle1, circle2, circle3, circle4]):
+        # print("searching")
+        found = search_for_box(agent, square)
+        if found:
+            square_direction = Vec3(square.x - agent.x, square.y - agent.y, 0)
+            agent.position += square_direction.normalized() * time.dt * move_speed
+            movement = square_direction.normalized() * time.dt * move_speed
             if agent.intersects(square).hit:
-                # print('Overlapping detected!')
-                # set circle position to the edge of the square
-                # agent.position -= moves[index]
+                max_square_direction = Vec3(0, 0, 0)
+                if abs(square_direction.x) > abs(square_direction.y):
+                    max_square_direction.x = square_direction.x
+                else:
+                    max_square_direction.y = square_direction.y
+
+                # Calculate the push direction based on the movement vector
+                # push_direction = move.normalized()  # Use the direction of movement
+                square.position += max_square_direction * time.dt * move_speed
+                if square.intersects(barrier).hit:
+                    square.position -= max_square_direction * time.dt * move_speed
+
+                # Check for collision again to prevent overlapping
+                if agent.intersects(square).hit:
+                    # print('Overlapping detected!')
+                    # set circle position to the edge of the square
+                    # agent.position -= moves[index]
+                    agent.position -= movement
+
+            # Check for collision with the barrier
+            if agent.intersects(barrier).hit:
+                # Calculate the push direction based on the movement vector
                 agent.position -= movement
 
-        # Check for collision with the barrier
-        if agent.intersects(barrier).hit:
-            # Calculate the push direction based on the movement vector
-            agent.position -= movement
-
     # Keep the circle and square within the platform bounds
-    keep_in_bounds(circle, circle2, square)
+    keep_in_bounds([circle, circle1, circle2, circle3, circle4], square)
 
     # search_for_box([circle, circle2], square)
 
