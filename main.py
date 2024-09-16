@@ -150,17 +150,28 @@ def keep_in_bounds(agents, square):
         square.x = left_platform + square.scale_x / 2
 
 def get_angle_between_two_lines(line1, line2):
-    f_point1 = [line1[0].x, line1[0].y]
-    f_point2 = [line1[1].x, line1[1].y]
-    s_point1 = [line2[0].x, line2[0].y]
-    s_point2 = [line2[1].x, line2[1].y]
+    # Line 1 vector (from point1 to point2)
+    v1 = [line1[1].x - line1[0].x, line1[1].y - line1[0].y]
+    
+    # Line 2 vector (from point1 to point2)
+    v2 = [line2[1].x - line2[0].x, line2[1].y - line2[0].y]
+    
+    # Dot product of v1 and v2
+    dot_product = v1[0] * v2[0] + v1[1] * v2[1]
+    
+    # Magnitudes of v1 and v2
+    mag_v1 = math.sqrt(v1[0]**2 + v1[1]**2)
+    mag_v2 = math.sqrt(v2[0]**2 + v2[1]**2)
+    
+    # Cosine of the angle between v1 and v2
+    cos_angle = dot_product / (mag_v1 * mag_v2)
+    
+    # Clamp the value to avoid floating-point errors beyond [-1, 1]
+    cos_angle = max(-1, min(1, cos_angle))
+    
+    # Get the angle in radians and convert it to degrees
+    angle = math.degrees(math.acos(cos_angle))
 
-    # calculate the slope of the lines
-    m1 = (f_point2[1] - f_point1[1]) / ((f_point2[0] - f_point1[0]) + 0.0001)
-    m2 = (s_point2[1] - s_point1[1]) / ((s_point2[0] - s_point1[0]) + 0.0001)
-
-    # calculate the angle between the lines
-    angle = math.degrees(math.atan(abs((m2 - m1) / (1 + m1 * m2))))
     return angle
 
 def get_facing_vector(agent, length):
@@ -222,7 +233,7 @@ def search_cone(agent, target, cone_angle, cone_length, payload=True):
 
 def search_for_box(agent, square):
     # Check for square within cone of vision
-    cone_angle = 5
+    cone_angle = 40
     cone_length = 50
     found = search_cone(agent, square, cone_angle, cone_length)
 
@@ -297,7 +308,7 @@ def update():
                 # clear = search_cone(agent, goal, 360, 50, False)
                 clear = True
                 if clear:
-                     = move_agent_to_payload(agent, square, barrier)
+                    movement = move_agent_to_payload(agent, square, barrier)
                 else:
                     # move around the the payload (code below is a placeholder) - still working on this
                     square.position += Vec3(0, 0, 0)
