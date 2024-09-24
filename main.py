@@ -417,6 +417,7 @@ def move_in_barrier_direction(agent):
     agent.position += Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
 
 def reposition(agent, obj):
+    speed = 0.01
     # Assume we have some functions that give us the agent's direction to object and goal
     object_direction = get_direction_to(agent, obj)  # Direction from agent to object
     goal_direction = get_direction_to(agent, goal)      # Direction from agent to goal
@@ -436,7 +437,7 @@ def reposition(agent, obj):
     object_distance = get_distance(agent, obj)
     
     # Force field around the object (we move perpendicular to the object vector)
-    object_vec = direction_to_vector(object_direction)  # Convert object direction to a vector
+    object_vec = np.array([math.cos(object_direction), math.sin(object_direction)])  # Convert object direction to a vector
     move_vec = np.array([-object_vec[1], object_vec[0]])  # Perpendicular vector for moving around
     
     if clockwise:
@@ -447,7 +448,12 @@ def reposition(agent, obj):
         move_vec += object_vec  # Move towards the object if too far away
 
     # Apply movement to the agent
-    move_agent(agent, move_vec)
+    # Normalize the movement vector if it's not already
+    move_vec = move_vec / np.linalg.norm(move_vec)
+    
+    # Apply movement vector scaled by speed
+    agent.x += move_vec[0] * speed
+    agent.y += move_vec[1] * speed
 
 def get_direction_to(agent, obj):
     """
@@ -481,30 +487,6 @@ def get_distance(agent, obj):
     # Return the Euclidean distance
     return math.sqrt(dx**2 + dy**2)
 
-def direction_to_vector(direction):
-    """
-    Convert a direction (angle in radians) to a 2D normalized vector.
-    Args:
-        direction: Angle in radians.
-    Returns:
-        A 2D vector (x, y) as a numpy array corresponding to the direction.
-    """
-    return np.array([math.cos(direction), math.sin(direction)])
-
-def move_agent(agent, move_vec, speed=0.1):
-    """
-    Move the agent by a given movement vector.
-    Args:
-        agent: The agent object, assumed to have a position attribute (x, y).
-        move_vec: The movement vector as a numpy array (x, y).
-        speed: Movement speed of the agent. Default is 1.0 (optional).
-    """
-    # Normalize the movement vector if it's not already
-    move_vec = move_vec / np.linalg.norm(move_vec)
-    
-    # Apply movement vector scaled by speed
-    agent.x += move_vec[0] * speed
-    agent.y += move_vec[1] * speed
 
 # Dictionary to track how long each agent has reached the payload
 reach_timers = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
@@ -514,7 +496,7 @@ random_walk_states = {0: False, 1: False, 2: False, 3: False, 4: False}  # Track
 # Global variable to store the current random direction for each agent
 random_walk_directions = {}
 
-def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=2.0):
+def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=1.0):
     """
     Move the agent in a random direction, and periodically change the direction.
     
