@@ -1,4 +1,6 @@
 from ursina import *
+import math
+import numpy as np
 
 # Initialize the Ursina application
 app = Ursina()
@@ -52,6 +54,8 @@ square = Entity(
 ### Create Agents ###
 
 # Create a circle on the platform
+
+### make this a child class so additional variables can be stored
 circle = Entity(
     model='cube',
     color=color.white,
@@ -281,14 +285,108 @@ def move_agent_to_payload(agent, square, barrier):
 
     return movement
 
+def reposition(agent, obj):
+    # Assume we have some functions that give us the agent's direction to object and goal
+    object_direction = get_direction_to(agent, obj)  # Direction from agent to object
+    goal_direction = get_direction_to(agent, goal)      # Direction from agent to goal
+    
+    # Calculate difference between the object's direction and goal's direction
+    diff = object_direction - goal_direction
+    diff = (diff + 2 * math.pi) % (2 * math.pi)  # Normalize angle difference to [0, 2*pi)
+    
+    # Determine whether to move clockwise or counterclockwise
+    clockwise = diff >= math.pi
+    
+    # Parameters for movement vector
+    min_dist = 0.1  # Minimum distance from object
+    max_dist = 0.25  # Maximum distance from object
+    
+    # Get the current distance of the agent from the object
+    object_distance = get_distance(agent, obj)
+    
+    # Force field around the object (we move perpendicular to the object vector)
+    object_vec = direction_to_vector(object_direction)  # Convert object direction to a vector
+    move_vec = np.array([-object_vec[1], object_vec[0]])  # Perpendicular vector for moving around
+    
+    if clockwise:
+        move_vec *= -1  # Reverse direction if moving clockwise
+    
+    # Keep distance from object
+    if object_distance > 0.2:
+        move_vec += object_vec  # Move towards the object if too far away
+
+    # Apply movement to the agent
+    move_agent(agent, move_vec)
+
+def get_direction_to(agent, obj):
+    """
+    Calculate the direction (angle) from the agent to the object in radians.
+    Args:
+        agent: The agent object, assumed to have a position attribute (x, y).
+        obj: The target object, assumed to have a position attribute (x, y).
+    Returns:
+        The angle in radians between the agent and the object.
+    """
+    # Calculate the difference in positions
+    dx = obj.x - agent.x
+    dy = obj.y - agent.y
+
+    # Return the angle using atan2, which handles full 360 degrees
+    return math.atan2(dy, dx)
+
+def get_distance(agent, obj):
+    """
+    Calculate the distance between the agent and the object.
+    Args:
+        agent: The agent object, assumed to have a position attribute (x, y).
+        obj: The target object, assumed to have a position attribute (x, y).
+    Returns:
+        The Euclidean distance between the agent and the object.
+    """
+    # Calculate the difference in positions
+    dx = obj.x - agent.x
+    dy = obj.y - agent.y
+    
+    # Return the Euclidean distance
+    return math.sqrt(dx**2 + dy**2)
+
+def direction_to_vector(direction):
+    """
+    Convert a direction (angle in radians) to a 2D normalized vector.
+    Args:
+        direction: Angle in radians.
+    Returns:
+        A 2D vector (x, y) as a numpy array corresponding to the direction.
+    """
+    return np.array([math.cos(direction), math.sin(direction)])
+
+def move_agent(agent, move_vec, speed=0.1):
+    """
+    Move the agent by a given movement vector.
+    Args:
+        agent: The agent object, assumed to have a position attribute (x, y).
+        move_vec: The movement vector as a numpy array (x, y).
+        speed: Movement speed of the agent. Default is 1.0 (optional).
+    """
+    # Normalize the movement vector if it's not already
+    move_vec = move_vec / np.linalg.norm(move_vec)
+    
+    # Apply movement vector scaled by speed
+    agent.x += move_vec[0] * speed
+    agent.y += move_vec[1] * speed
+
+
 # Update function called every frame
 def update():
 
     # Check if the square (payload) has reached the goal
     if square.intersects(goal).hit:
         print("Success")
+    
+    agent_targets = {}
 
     for index, agent in enumerate([circle, circle1, circle2, circle3, circle4]):
+
         # Check if the agent has can see the payload within its cone of vision
         can_see_payload = search_for_box(agent, square)
 
@@ -306,12 +404,13 @@ def update():
             if reached:
                 # Check if goal is occluded (still working on this)
                 # clear = search_cone(agent, goal, 360, 50, False)
-                clear = True
+                clear = False
                 if clear:
                     movement = move_agent_to_payload(agent, square, barrier)
                 else:
                     # move around the the payload (code below is a placeholder) - still working on this
-                    square.position += Vec3(0, 0, 0)
+                    reposition(agent, square)
+                    
             else:  
                 # Agent has not reached the payload yet so move towards it 
                 ### Move the agent towards the payload ###
