@@ -178,6 +178,33 @@ def get_angle_between_two_lines(line1, line2):
 
     return angle
 
+def avoid_agent_and_payload_overlap(agents, box):
+    ### This function prevents agents from overlapping each other ###
+
+    for i, agent in enumerate(agents):
+
+        # Check for collision again to prevent overlapping
+        if agent.intersects(box).hit:  # If agent and box overlap
+            # Calculate the direction to push them away from each other
+            direction = Vec3(agent.x - box.x, agent.y - box.y, 0).normalized()
+            
+            # Push the agent and the box away from each other
+            agent.position += direction * time.dt * 0.5  # Push agent away
+            box.position -= direction * time.dt * 0.5  # Push box away
+    
+        for j, other_agent in enumerate(agents):
+            if i != j and agent.intersects(other_agent).hit:  # If agents overlap
+                # Calculate the direction to push them away from each other
+                direction = Vec3(agent.x - other_agent.x, agent.y - other_agent.y, 0).normalized()
+                
+                # Push them away by a small amount
+                agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
+                other_agent.position -= direction * time.dt * 0.5
+
+            
+
+
+
 def get_facing_vector(agent, length):
     ### Get a vector pointing in the direction the agent is facing ###
     ### Given an agent and a length, return a vector pointing in the direction the agent is facing with the given length ###
@@ -572,6 +599,8 @@ def update():
 
     # Keep the agents and square within the platform bounds
     keep_in_bounds([circle, circle1, circle2, circle3, circle4], square)
+
+    avoid_agent_and_payload_overlap([circle, circle1, circle2, circle3, circle4], square)
 
     # Slide barrier side to side
     barrier_speed = 0.5
