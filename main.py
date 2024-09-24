@@ -410,7 +410,24 @@ def not_ideal_get_closest_entities(agent):
 def move_in_barrier_direction(agent):
     barrier_speed = 0.5
     barrier_direction = barrier_object.direction
-    agent.position += Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
+    move_distance = time.dt * barrier_speed * barrier_direction
+    old_position = barrier.position - Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
+    
+    # Move the agent in the direction of the barrier
+    agent.position += Vec3(move_distance, 0, 0)
+
+    # Check for collision again to prevent overlapping
+    if agent.intersects(barrier).hit:  # If agent and box overlap
+        old_distance = get_distance_between_two_3D_points(old_position, agent.position)
+        curr_distance = get_distance_between_two_3D_points(barrier.position, agent.position)
+        if old_distance > 1.02*curr_distance:
+
+            # Calculate the direction to push them away from each other
+            direction = Vec3(agent.position.x - barrier.position.x, agent.position.y - barrier.position.y, 0).normalized()
+            
+            # Push the agent and the box away from each other
+            agent.position += direction * time.dt * 0.5  # Push agent away
+            # barrier.position -= direction * time.dt * 0.5    # Push box away
 
 # Update function called every frame
 def update():
@@ -445,7 +462,7 @@ def update():
 
         # Check for if agent is colliding with the barrier
         if agent.intersects(barrier).hit: # If the agent intersects with the barrier, move it back
-            move_in_barrier_direction(agent)
+            move_in_barrier_direction(agent, barrier)
 
     # Keep the agents and square within the platform bounds
     keep_in_bounds([circle, circle1, circle2, circle3, circle4], square)
