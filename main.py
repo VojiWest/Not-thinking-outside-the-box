@@ -1,4 +1,6 @@
 from ursina import *
+import math
+import numpy as np
 
 # Initialize the Ursina application
 app = Ursina()
@@ -52,6 +54,8 @@ square = Entity(
 ### Create Agents ###
 
 # Create a circle on the platform
+
+### make this a child class so additional variables can be stored
 circle = Entity(
     model='cube',
     color=color.white,
@@ -429,21 +433,142 @@ def move_in_barrier_direction(agent):
             agent.position += direction * time.dt * 0.5  # Push agent away
             # barrier.position -= direction * time.dt * 0.5    # Push box away
 
+def reposition(agent, obj):
+    speed = 0.01
+    # Assume we have some functions that give us the agent's direction to object and goal
+    object_direction = get_direction_to(agent, obj)  # Direction from agent to object
+    goal_direction = get_direction_to(agent, goal)      # Direction from agent to goal
+    
+    # Calculate difference between the object's direction and goal's direction
+    diff = object_direction - goal_direction
+    diff = (diff + 2 * math.pi) % (2 * math.pi)  # Normalize angle difference to [0, 2*pi)
+    
+    # Determine whether to move clockwise or counterclockwise
+    clockwise = diff >= math.pi
+    
+    # Parameters for movement vector
+    min_dist = 0.1  # Minimum distance from object
+    max_dist = 0.25  # Maximum distance from object
+    
+    # Get the current distance of the agent from the object
+    object_distance = get_distance(agent, obj)
+    
+    # Force field around the object (we move perpendicular to the object vector)
+    object_vec = np.array([math.cos(object_direction), math.sin(object_direction)])  # Convert object direction to a vector
+    move_vec = np.array([-object_vec[1], object_vec[0]])  # Perpendicular vector for moving around
+    
+    if clockwise:
+        move_vec *= -1  # Reverse direction if moving clockwise
+    
+    # Keep distance from object
+    if object_distance > 0.2:
+        move_vec += object_vec  # Move towards the object if too far away
+
+    # Apply movement to the agent
+    # Normalize the movement vector if it's not already
+    move_vec = move_vec / np.linalg.norm(move_vec)
+    
+    # Apply movement vector scaled by speed
+    agent.x += move_vec[0] * speed
+    agent.y += move_vec[1] * speed
+
+def get_direction_to(agent, obj):
+    """
+    Calculate the direction (angle) from the agent to the object in radians.
+    Args:
+        agent: The agent object, assumed to have a position attribute (x, y).
+        obj: The target object, assumed to have a position attribute (x, y).
+    Returns:
+        The angle in radians between the agent and the object.
+    """
+    # Calculate the difference in positions
+    dx = obj.x - agent.x
+    dy = obj.y - agent.y
+
+    # Return the angle using atan2, which handles full 360 degrees
+    return math.atan2(dy, dx)
+
+def get_distance(agent, obj):
+    """
+    Calculate the distance between the agent and the object.
+    Args:
+        agent: The agent object, assumed to have a position attribute (x, y).
+        obj: The target object, assumed to have a position attribute (x, y).
+    Returns:
+        The Euclidean distance between the agent and the object.
+    """
+    # Calculate the difference in positions
+    dx = obj.x - agent.x
+    dy = obj.y - agent.y
+    
+    # Return the Euclidean distance
+    return math.sqrt(dx**2 + dy**2)
+
+
+# Dictionary to track how long each agent has reached the payload
+reach_timers = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+reach_threshold = 10  # 10 seconds threshold
+random_walk_states = {0: False, 1: False, 2: False, 3: False, 4: False}  # Track if an agent is in random walk mode
+
+# Global variable to store the current random direction for each agent
+random_walk_directions = {}
+
+def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=1.0):
+    """
+    Move the agent in a random direction, and periodically change the direction.
+    
+    Args:
+        agent: The agent object.
+        agent_id: The unique ID of the agent (used to track direction).
+        move_speed: Speed at which the agent moves.
+        change_direction_interval: How often (in seconds) the agent should change direction.
+    """
+    # Check if the agent has a stored random direction
+    if agent_id not in random_walk_directions:
+        # Initialize with a random direction if not already present
+        random_angle = random.uniform(0, 2 * math.pi)
+        random_walk_directions[agent_id] = Vec3(math.cos(random_angle), math.sin(random_angle), 0)
+
+    # Move the agent in the current random direction
+    direction = random_walk_directions[agent_id]
+    agent.position += direction.normalized() * time.dt * move_speed
+
+    # Periodically change direction after the specified interval
+    if time.time() % change_direction_interval < time.dt:
+        random_angle = random.uniform(0, 2 * math.pi)
+        random_walk_directions[agent_id] = Vec3(math.cos(random_angle), math.sin(random_angle), 0)
+
 # Update function called every frame
 def update():
 
     # Check if the square (payload) has reached the goal
     if square.intersects(goal).hit:
         print("Success")
+    
+    agent_targets = {}
 
     for index, agent in enumerate([circle, circle1, circle2, circle3, circle4]):
+         # If the agent is in random walk mode, make it do random walk
+        if random_walk_states[index]:
+            random_walk(agent, index)  # Call your random walk function here
+            # continue  # Skip the rest of the loop if the agent is in random walk mode
+
         # Check if the agent has can see the payload within its cone of vision
         can_see_payload = search_for_entity(agent, square)
 
         if can_see_payload:
+            random_walk_states[index] = False
             # Check if agent reached the payload
             reached = reach_payload(agent, square)
             if reached:
+                # Increment the timer for the agent if it's at the payload
+                reach_timers[index] += time.dt  # Increment by delta time (time between frames)
+                
+                if reach_timers[index] >= reach_threshold:
+                    print(f"Agent {index} is starting random walk after 10 seconds at the payload.")
+                    random_walk_states[index] = True  # Set random walk mode
+                    continue  # Skip the rest of the loop for this agent
+
                 # Check if goal is occluded (still working on this)
                 # clear = search_cone(agent, goal, 360, 50, False)
                 # found_entities = get_closest_entities(agent, index, angle_jump=5, distance=50)
@@ -452,10 +577,17 @@ def update():
                     # print("Goal is occluded for agent", index)
                     movement = move_agent_to_payload(agent, square, barrier)
                 else:
+                    # If agent hasn't reached the payload, reset its timer
+                    reach_timers[index] = 0
+                
                     # move around the the payload (code below is a placeholder) - still working on this
-                    square.position += Vec3(0, 0, 0)
-                    movement = Vec3(0, 0, 0)
+                    print("repositioning")
+                    reposition(agent, square)
+                    
+                    # movement = Vec3(0, 0, 0)
             else:  
+                 # If agent can't see the payload, reset its timer
+                reach_timers[index] = 0
                 # Agent has not reached the payload yet so move towards it 
                 ### Move the agent towards the payload ###
                 movement = move_agent_to_payload(agent, square, barrier)
