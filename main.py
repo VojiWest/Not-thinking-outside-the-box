@@ -8,7 +8,7 @@ camera.orthographic = True
 camera.fov = 10  # Field of view to adjust the zoom level
 
 # Define movement speed of agents
-move_speed = 1
+move_speed = 0.5
 
 """ CREATE ENTITIES """ # I should probably do this in a better way, but for now this is what I have
 
@@ -380,6 +380,11 @@ def not_ideal_get_closest_entities(agent):
         return "payload"
     return None
 
+def move_in_barrier_direction(agent):
+    barrier_speed = 0.5
+    barrier_direction = barrier_object.direction
+    agent.position += Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
+
 # Update function called every frame
 def update():
 
@@ -403,7 +408,6 @@ def update():
                     # print("Goal is occluded for agent", index)
                     movement = move_agent_to_payload(agent, square, barrier)
                 else:
-                    print("Goal is visible for agent", index)
                     # move around the the payload (code below is a placeholder) - still working on this
                     square.position += Vec3(0, 0, 0)
                     movement = Vec3(0, 0, 0)
@@ -414,13 +418,18 @@ def update():
 
         # Check for if agent is colliding with the barrier
         if agent.intersects(barrier).hit: # If the agent intersects with the barrier, move it back
-            agent.position -= movement
+            move_in_barrier_direction(agent)
 
     # Keep the agents and square within the platform bounds
     keep_in_bounds([circle, circle1, circle2, circle3, circle4], square)
 
     # Slide barrier side to side
-    slide_barrier(barrier, 0.5)
+    barrier_speed = 0.5
+    slide_barrier(barrier, barrier_speed)
+    for entity in [circle, circle1, circle2, circle3, circle4, square]:
+        if entity.intersects(barrier).hit: # If the payload intersects with the barrier after moving, move it back
+            print("Agent hit")
+            move_in_barrier_direction(entity)
 
 
 # Run the Ursina application
