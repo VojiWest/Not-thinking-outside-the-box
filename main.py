@@ -205,6 +205,16 @@ def avoid_agent_and_payload_overlap(agents, box):
 
             
 
+def check_entity_at_barrier_level(entity, barrier, thershold=0.05):
+    top_barrier = barrier.y + barrier.scale_y / 2
+    bottom_barrier = barrier.y - barrier.scale_y / 2
+
+    top_entity = entity.y + entity.scale_y / 2
+    bottom_entity = entity.y - entity.scale_y / 2
+
+    if bottom_entity * (1 + thershold) < top_barrier or top_entity > bottom_barrier * (1 + thershold):
+        return True
+    return False
 
 
 def get_facing_vector(agent, length):
@@ -301,7 +311,7 @@ def get_main_direction(square_direction):
 
     return max_square_direction
 
-def slide_barrier(barrier, barrier_speed):
+def slide_barrier(barrier, barrier_speed, reverse=False):
     # Slide barrier side to side
     barrier_speed = 0.5
     if barrier.position.x > 2:
@@ -309,7 +319,10 @@ def slide_barrier(barrier, barrier_speed):
     elif barrier.position.x < -2:
         barrier_object.update()
     barrier_direction = barrier_object.direction
-    barrier.position += Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
+    if reverse:
+        barrier.position -= Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
+    else:
+        barrier.position += Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
 
 def move_agent_to_payload(agent, square, barrier):
     ### Move the agent towards the payload ###
@@ -426,6 +439,7 @@ def move_in_barrier_direction(agent):
     if agent.intersects(barrier).hit:  # If agent and box overlap
         old_distance = get_distance_between_two_3D_points(old_position, agent.position)
         curr_distance = get_distance_between_two_3D_points(barrier.position, agent.position)
+        print("Old Distance: ", old_distance, "Current Distance: ", curr_distance)
         if old_distance > 1.02*curr_distance:
 
             # Calculate the direction to push them away from each other
@@ -546,8 +560,8 @@ def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=1.0):
 def update():
 
     # Check if the square (payload) has reached the goal
-    if square.intersects(goal).hit:
-        print("Success")
+    # if square.intersects(goal).hit:
+        # print("Success")
     
     agent_targets = {}
 
@@ -565,7 +579,7 @@ def update():
             # Check if agent reached the payload
             reached = reach_payload(agent, square)
             if reached:
-                print("reached")
+                # print("reached")
                 # Increment the timer for the agent if it's at the payload
                 reach_timers[index] += time.dt  # Increment by delta time (time between frames)
                 
@@ -579,14 +593,14 @@ def update():
                 # found_entities = get_closest_entities(agent, index, angle_jump=5, distance=50)
                 found_entities = not_ideal_get_closest_entities(agent)
                 if found_entities != "goal":
-                    print("Goal is occluded for agent", index)
+                    # print("Goal is occluded for agent", index)
                     movement = move_agent_to_payload(agent, square, barrier)
                 else:
                     # If agent hasn't reached the payload, reset its timer
                     reach_timers[index] = 0
                 
                     # move around the the payload (code below is a placeholder) - still working on this
-                    print("repositioning")
+                    # print("repositioning")
                     reposition(agent, square)
                     
                     # movement = Vec3(0, 0, 0)
@@ -610,9 +624,12 @@ def update():
     barrier_speed = 0.5
     slide_barrier(barrier, barrier_speed)
     for entity in [circle, circle1, circle2, circle3, circle4, square]:
-        if entity.intersects(barrier).hit: # If the payload intersects with the barrier after moving, move it back
-            print("Agent hit")
-            move_in_barrier_direction(entity)
+        if entity.intersects(barrier).hit: # If any entity intersects the barrier then stop the barrier
+            if check_entity_at_barrier_level(entity, barrier):
+                # print("Agent hit")
+                # move_in_barrier_direction(entity)
+                slide_barrier(barrier, barrier_speed, reverse=True)
+                break
 
 
 # Run the Ursina application
