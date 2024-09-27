@@ -151,10 +151,10 @@ def prevent_illegal_agent_movements(agents, square):
         left_agent = agent.x - agent.scale_x / 2
 
         # Compute the horizontal and vertical distances correctly
-        horizontal_distance_right = left_platform - right_square
-        horizontal_distance_left = left_square - right_platform
-        vertical_distance_top = bottom_square - top_platform
-        vertical_distance_bottom = top_square - bottom_platform
+        horizontal_distance_right = right_platform - right_square
+        horizontal_distance_left = left_square - left_platform
+        vertical_distance_top = top_square - top_platform
+        vertical_distance_bottom = bottom_square - bottom_platform
 
         # Illegal Horizontal gaps
         if horizontal_distance_right < agent.scale_x:
