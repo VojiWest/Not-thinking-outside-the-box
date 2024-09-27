@@ -126,6 +126,14 @@ def prevent_illegal_agent_movements(agents, square):
     right_square = square.x + square.scale_x / 2
     left_square = square.x - square.scale_x / 2
 
+    # Compute the horizontal and vertical distances between the box and the wall (platform)
+    horizontal_distance_right = right_platform - right_square
+    horizontal_distance_left = left_square - left_platform 
+    vertical_distance_top = bottom_square - bottom_platform
+    vertical_distance_bottom = top_platform - top_square
+
+    print(horizontal_distance_left, horizontal_distance_right, vertical_distance_top, vertical_distance_bottom)
+
 
     for agent in agents:
         top_agent = agent.y + agent.scale_y / 2
@@ -133,15 +141,8 @@ def prevent_illegal_agent_movements(agents, square):
         right_agent = agent.x + agent.scale_x / 2
         left_agent = agent.x - agent.scale_x / 2
 
-        # Compute the horizontal and vertical distances between the box and the wall (platform)
-        horizontal_distance_right = right_platform - right_square
-        horizontal_distance_left = left_square - left_platform 
-        vertical_distance_top = bottom_square - bottom_platform
-        vertical_distance_bottom = top_platform - top_square
 
-        print(horizontal_distance_left, horizontal_distance_right, vertical_distance_top, vertical_distance_bottom)
-
-    # Buffer distance to prevent agents from going too close to illegal gaps
+    # Buffer distance to prevent agents from going too close to illegal gaps (when gap too small for them to fit)
     buffer_distance = 0.01  # keep this value small
 
     for agent in agents:
