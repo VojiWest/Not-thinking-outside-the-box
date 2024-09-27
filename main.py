@@ -100,6 +100,15 @@ circle4 = Entity(
     collider='sphere'  # Add a box collider to the square
 )
 
+# Create another circle on the platform
+circle5 = Entity(
+    model='cube',
+    color=color.white,
+    scale=0.2,
+    position=(1, -3.5, -0.01),  # Slightly raised to prevent z-fighting
+    collider='sphere'  # Add a box collider to the square
+)
+
 
 class Barrier():
     def __init__(self, direction):
@@ -401,30 +410,50 @@ def get_closest_entities(agent, agent_index, angle_jump=5, distance=50):
     # print("Agent", agent_index, "found entities", found_entities)
     return found_entities
 
-def not_ideal_get_closest_entities(agent):
+def not_ideal_get_closest_entities(agent, full=False):
     # Cast ray in direction of goal not in direction of agent facing
     origin = agent.world_position
     origin.z = -0.1
-    direction_goal = Vec3(goal.x - agent.x, goal.y - agent.y, 0).normalized()
-    to_ignore = [circle, circle1, circle2, circle3, circle4]
-    ray = raycast(origin, direction_goal, distance=50, ignore=to_ignore, debug=True)
     finds = []
-    for entity in ray.entities:
-        distance = get_distance_between_two_3D_points(agent.position, entity.position)
-        finds.append((entity.scale, distance))
+    closest_colors = []
+    search_list = [goal, circle, circle1, circle2, circle3, circle4]
+    search_list.remove(agent)
+    for other_entity in search_list:
+        direction_goal = Vec3(other_entity.x - agent.x, other_entity.y - agent.y, 0).normalized()
+        to_ignore = [agent]
+        ray = raycast(origin, direction_goal, distance=50, ignore=to_ignore, debug=True)
+        for entity in ray.entities:
+            distance = get_distance_between_two_3D_points(agent.position, entity.position)
+            finds.append((entity.scale, distance, entity.color))
 
-    closest_entity = None
-    closest_distance = 1000
-    for scale, distance in finds:
-        if distance < closest_distance:
-            closest_distance = distance
-            closest_entity = scale
+        closest_entity = None
+        closest_distance = 1000
+        closest_color = None
+        for scale, distance, color in finds:
+            if distance < closest_distance:
+                closest_distance = distance
+                closest_entity = scale
+                closest_color = color
 
-    if closest_entity == goal.scale:
+        closest_colors.append(closest_color)
+
+    # if closest_entity == goal.scale:
+    #     print("Closest Color (g):", closest_color)
+    #     return "goal"
+    # if closest_entity == square.scale:
+    #     print("Closest Color (p):", closest_color)
+    #     return "payload"
+    # if closest_entity == barrier.scale:
+    #     print("Closest Color (b):", closest_color)
+    #     return "barrier"
+
+    if full:
+        return closest_colors
+
+    if (0,1,0,1) in closest_colors:
         return "goal"
-    if closest_entity == square.scale:
-        return "payload"
-    return None
+    else:
+        return None
 
 def move_in_barrier_direction(agent):
     barrier_speed = 0.5
@@ -439,7 +468,7 @@ def move_in_barrier_direction(agent):
     if agent.intersects(barrier).hit:  # If agent and box overlap
         old_distance = get_distance_between_two_3D_points(old_position, agent.position)
         curr_distance = get_distance_between_two_3D_points(barrier.position, agent.position)
-        print("Old Distance: ", old_distance, "Current Distance: ", curr_distance)
+        # print("Old Distance: ", old_distance, "Current Distance: ", curr_distance)
         if old_distance > 1.02*curr_distance:
 
             # Calculate the direction to push them away from each other
@@ -556,9 +585,51 @@ def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=1.0):
 
     avoid_agent_and_payload_overlap([agent], square)
 
+def show_closest_colors(agent):
+    closest_colors = not_ideal_get_closest_entities(agent, full=True)
+    text_colors = []
+    for color in closest_colors:
+        if color == (0,1,0,1):
+            text_colors.append("Green")
+        elif color == (0,0,0,1):
+            text_colors.append("Black")
+        elif color == (0,0,1,1):
+            text_colors.append("Blue")
+        elif color == (1,0,0,1):
+            text_colors.append("Red")
+        elif color == (1,1,1,1):
+            text_colors.append("White")
+        elif color == (0.10000000149011612, 0.8500000238418579,1,1):
+            text_colors.append("Light Blue")
+        else:
+            text_colors.append("Other Color")
+
+    print(text_colors)
+
+def check_if_agent_turn_goal(agent):
+    closest_entity_color = not_ideal_get_closest_entities(agent)
+    if closest_entity_color != "goal": # Agent can't see a goal
+        agent.color = color.green
+        print("Agent turned into goal")
+    show_closest_colors(agent)
+
+    ### Still have to check if angle is greater than 90 between payload and goal
+
+def check_if_goal_turn_agent(agent, distance_threshold = 1):
+    if not_ideal_get_closest_entities(agent) == "goal": # Agent sees a goal
+        agent.color = hsv(190, 0.9, 1) # Light blue
+        print("Agent turned back into agent")
+        # show_closest_colors(agent)
+    elif get_distance_between_two_3D_points(square.position, agent.position) < distance_threshold:
+        agent.color = hsv(190, 0.9, 1) # Light blue
+        print("Agent turned back into agent")
+        # show_closest_colors(agent)
+
+    ### Still have to implement timeout
+
 # Update function called every frame
 def update():
-
+    print()
     # Check if the square (payload) has reached the goal
     # if square.intersects(goal).hit:
         # print("Success")
@@ -571,45 +642,53 @@ def update():
         #     random_walk(agent, index)  # Call your random walk function here
             # continue  # Skip the rest of the loop if the agent is in random walk mode
 
+        # McRae stuff
+        if not reach_payload(agent, square):
+            if agent.color != color.green:
+                check_if_agent_turn_goal(agent)
+            else:
+                check_if_goal_turn_agent(agent)
+
         # Check if the agent has can see the payload within its cone of vision
-        can_see_payload = search_for_entity(agent, square)
+        if agent.color != color.green:
+            can_see_payload = search_for_entity(agent, square)
 
-        if can_see_payload:
-            random_walk_states[index] = False
-            # Check if agent reached the payload
-            reached = reach_payload(agent, square)
-            if reached:
-                # print("reached")
-                # Increment the timer for the agent if it's at the payload
-                reach_timers[index] += time.dt  # Increment by delta time (time between frames)
-                
-                # if reach_timers[index] >= reach_threshold:
-                #     print(f"Agent {index} is starting random walk after 10 seconds at the payload.")
-                #     random_walk_states[index] = True  # Set random walk mode
-                #     continue  # Skip the rest of the loop for this agent
-
-                # Check if goal is occluded (still working on this)
-                # clear = search_cone(agent, goal, 360, 50, False)
-                # found_entities = get_closest_entities(agent, index, angle_jump=5, distance=50)
-                found_entities = not_ideal_get_closest_entities(agent)
-                if found_entities != "goal":
-                    # print("Goal is occluded for agent", index)
-                    movement = move_agent_to_payload(agent, square, barrier)
-                else:
-                    # If agent hasn't reached the payload, reset its timer
-                    reach_timers[index] = 0
-                
-                    # move around the the payload (code below is a placeholder) - still working on this
-                    # print("repositioning")
-                    reposition(agent, square)
+            if can_see_payload:
+                random_walk_states[index] = False
+                # Check if agent reached the payload
+                reached = reach_payload(agent, square)
+                if reached:
+                    # print("reached")
+                    # Increment the timer for the agent if it's at the payload
+                    reach_timers[index] += time.dt  # Increment by delta time (time between frames)
                     
-                    # movement = Vec3(0, 0, 0)
-            else:  
-                 # If agent can't see the payload, reset its timer
-                reach_timers[index] = 0
-                # Agent has not reached the payload yet so move towards it 
-                ### Move the agent towards the payload ###
-                movement = move_agent_to_payload(agent, square, barrier)
+                    # if reach_timers[index] >= reach_threshold:
+                    #     print(f"Agent {index} is starting random walk after 10 seconds at the payload.")
+                    #     random_walk_states[index] = True  # Set random walk mode
+                    #     continue  # Skip the rest of the loop for this agent
+
+                    # Check if goal is occluded (still working on this)
+                    # clear = search_cone(agent, goal, 360, 50, False)
+                    # found_entities = get_closest_entities(agent, index, angle_jump=5, distance=50)
+                    found_entities = not_ideal_get_closest_entities(agent)
+                    # if found_entities != "goal":
+                    #     # print("Goal is occluded for agent", index)
+                    #     # movement = move_agent_to_payload(agent, square, barrier)
+                    # else:
+                    #     # If agent hasn't reached the payload, reset its timer
+                    #     reach_timers[index] = 0
+                    
+                        # move around the the payload (code below is a placeholder) - still working on this
+                        # print("repositioning")
+                        # reposition(agent, square)
+                        
+                        # movement = Vec3(0, 0, 0)
+                else:  
+                    # If agent can't see the payload, reset its timer
+                    reach_timers[index] = 0
+                    # Agent has not reached the payload yet so move towards it 
+                    ### Move the agent towards the payload ###
+                    # movement = move_agent_to_payload(agent, square, barrier)
 
         # Check for if agent is colliding with the barrier
         if agent.intersects(barrier).hit: # If the agent intersects with the barrier, move it back
