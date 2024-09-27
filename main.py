@@ -121,6 +121,83 @@ class Barrier():
 # Initialize the barrier
 barrier_object = Barrier(0.5)
 
+
+def prevent_illegal_agent_movements(agents, square):
+
+    # Get the bounds of the square and the platform
+    top_platform = platform.y + platform.scale_y / 2
+    bottom_platform = platform.y - platform.scale_y / 2
+    right_platform = platform.x + platform.scale_x / 2
+    left_platform = platform.x - platform.scale_x / 2
+
+    top_square = square.y + square.scale_y / 2
+    bottom_square = square.y - square.scale_y / 2
+    right_square = square.x + square.scale_x / 2
+    left_square = square.x - square.scale_x / 2
+
+
+    for agent in agents:
+        top_agent = agent.y + agent.scale_y / 2
+        bottom_agent = agent.y - agent.scale_y / 2
+        right_agent = agent.x + agent.scale_x / 2
+        left_agent = agent.x - agent.scale_x / 2
+
+        # Compute the horizontal and vertical distances between the box and the wall (platform)
+        horizontal_distance_right = right_platform - right_square
+        horizontal_distance_left = left_square - left_platform 
+        vertical_distance_top = bottom_square - bottom_platform
+        vertical_distance_bottom = top_platform - top_square
+
+        print(horizontal_distance_left, horizontal_distance_right, vertical_distance_top, vertical_distance_bottom)
+
+    # Buffer distance to prevent agents from going too close to illegal gaps
+    buffer_distance = 0.01  # keep this value small
+
+    for agent in agents:
+        top_agent = agent.y + agent.scale_y / 2
+        bottom_agent = agent.y - agent.scale_y / 2
+        right_agent = agent.x + agent.scale_x / 2
+        left_agent = agent.x - agent.scale_x / 2
+
+        # Compute the horizontal and vertical distances correctly
+        horizontal_distance_right = right_platform - right_square
+        horizontal_distance_left = left_square - left_platform
+        vertical_distance_top = top_square - top_platform
+        vertical_distance_bottom = bottom_square - bottom_platform
+
+        # Illegal Horizontal gaps
+        if horizontal_distance_right < agent.scale_x:
+            if right_agent > left_platform:
+                # Move the agent slightly left to avoid the gap
+                new_x = left_platform - agent.scale_x / 2 - buffer_distance
+                agent.x = max(new_x, agent.x)  # Only move if needed to avoid a gap
+                keep_in_bounds(agents, square)
+                avoid_agent_and_payload_overlap(agents, square)
+        if horizontal_distance_left < agent.scale_x:
+            if left_agent < right_platform:
+                # Move the agent slightly right to avoid the gap
+                new_x = right_platform + agent.scale_x / 2 + buffer_distance
+                agent.x = min(new_x, agent.x)  # Only move if needed to avoid a gap
+                keep_in_bounds(agents, square)
+                avoid_agent_and_payload_overlap(agents, square)
+
+        # Illegal Vertical gaps
+        if vertical_distance_top < agent.scale_y:
+            if top_agent > bottom_platform:
+                # Move the agent slightly down to avoid the gap
+                new_y = bottom_platform - agent.scale_y / 2 - buffer_distance
+                agent.y = max(new_y, agent.y)  # Only move if needed
+                keep_in_bounds(agents, square)
+                avoid_agent_and_payload_overlap(agents, square)
+        if vertical_distance_bottom < agent.scale_y:
+            if bottom_agent < top_platform:
+                # Move the agent slightly up to avoid the gap
+                new_y = top_platform + agent.scale_y / 2 + buffer_distance
+                agent.y = min(new_y, agent.y)  # Only move if needed
+                keep_in_bounds(agents, square)
+                avoid_agent_and_payload_overlap(agents, square)
+
+
 def keep_in_bounds(agents, square):
     ### Used to keep the agents and square within the platform bounds ###
     ### Given list of agents and square, check if they are within the platform bounds and push them back in if they are outside ###
@@ -153,7 +230,6 @@ def keep_in_bounds(agents, square):
             agent.x = left_platform + agent.scale_x / 2
 
         
-
     # Check if the square is outside the platform, if so, push it back in
     if top_square > top_platform:
         square.y = top_platform - square.scale_y / 2
@@ -696,6 +772,8 @@ def update():
 
     # Keep the agents and square within the platform bounds
     keep_in_bounds([circle, circle1, circle2, circle3, circle4], square)
+
+    prevent_illegal_agent_movements([circle, circle1, circle2, circle3, circle4], square)
 
     avoid_agent_and_payload_overlap([circle, circle1, circle2, circle3, circle4], square)
 
