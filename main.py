@@ -10,7 +10,7 @@ camera.orthographic = True
 camera.fov = 10  # Field of view to adjust the zoom level
 
 # Define movement speed of agents
-move_speed = 0.5
+move_speed = 0.75
 
 """ CREATE ENTITIES """ # I should probably do this in a better way, but for now this is what I have
 
@@ -190,7 +190,7 @@ def avoid_agent_and_payload_overlap(agents, box):
             
             # Push the agent and the box away from each other
             agent.position += direction * time.dt * 0.5  # Push agent away
-            box.position -= direction * time.dt * 0.5  # Push box away
+            # box.position -= direction * time.dt * 0.5  # Push box away
     
         for j, other_agent in enumerate(agents):
             if i != j and agent.intersects(other_agent).hit:  # If agents overlap
@@ -199,7 +199,7 @@ def avoid_agent_and_payload_overlap(agents, box):
                 
                 # Push them away by a small amount
                 agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
-                other_agent.position -= direction * time.dt * 0.5
+                # other_agent.position -= direction * time.dt * 0.5
 
             
 
