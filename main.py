@@ -532,8 +532,8 @@ def update():
 
     for index, agent in enumerate([circle, circle1, circle2, circle3, circle4]):
          # If the agent is in random walk mode, make it do random walk
-        if random_walk_states[index]:
-            random_walk(agent, index)  # Call your random walk function here
+        # if random_walk_states[index]:
+        #     random_walk(agent, index)  # Call your random walk function here
             # continue  # Skip the rest of the loop if the agent is in random walk mode
 
         # Check if the agent has can see the payload within its cone of vision
@@ -544,20 +544,21 @@ def update():
             # Check if agent reached the payload
             reached = reach_payload(agent, square)
             if reached:
+                print("reached")
                 # Increment the timer for the agent if it's at the payload
                 reach_timers[index] += time.dt  # Increment by delta time (time between frames)
                 
-                if reach_timers[index] >= reach_threshold:
-                    print(f"Agent {index} is starting random walk after 10 seconds at the payload.")
-                    random_walk_states[index] = True  # Set random walk mode
-                    continue  # Skip the rest of the loop for this agent
+                # if reach_timers[index] >= reach_threshold:
+                #     # print(f"Agent {index} is starting random walk after 10 seconds at the payload.")
+                #     random_walk_states[index] = True  # Set random walk mode
+                #     continue  # Skip the rest of the loop for this agent
 
                 # Check if goal is occluded (still working on this)
                 # clear = search_cone(agent, goal, 360, 50, False)
                 # found_entities = get_closest_entities(agent, index, angle_jump=5, distance=50)
                 found_entities = not_ideal_get_closest_entities(agent)
                 if found_entities != "goal":
-                    # print("Goal is occluded for agent", index)
+                    print("Goal is occluded for agent", index)
                     movement = move_agent_to_payload(agent, square, barrier)
                 else:
                     # If agent hasn't reached the payload, reset its timer
