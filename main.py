@@ -57,45 +57,45 @@ square = Entity(
 
 ### make this a child class so additional variables can be stored
 circle = Entity(
-    model='cube',
+    model='sphere',
     color=color.white,
     scale=0.2,
-    position=(-2, 3, -0.01),  # Slightly raised to prevent z-fighting
+    position=(-1, 3, -0.01),  # Slightly raised to prevent z-fighting
     collider='sphere'  # Add a box collider to the square
 )
 
 # Create another circle on the platform
 circle1 = Entity(
-    model='cube',
+    model='sphere',
     color=color.white,
-    scale=0.2,
-    position=(-3, 4, -0.01),  # Slightly raised to prevent z-fighting
+    scale=0.19,
+    position=(-3, 3.75, -0.01),  # Slightly raised to prevent z-fighting
     collider='sphere'  # Add a box collider to the square
 )
 
 # Create another circle on the platform
 circle2 = Entity(
-    model='cube',
+    model='sphere',
     color=color.white,
-    scale=0.2,
-    position=(-2, 4, -0.01),  # Slightly raised to prevent z-fighting
+    scale=0.18,
+    position=(-2, 4.25, -0.01),  # Slightly raised to prevent z-fighting
     collider='sphere'  # Add a box collider to the square
 )
 
 # Create another circle on the platform
 circle3 = Entity(
-    model='cube',
+    model='sphere',
     color=color.white,
-    scale=0.2,
-    position=(3, 4, -0.01),  # Slightly raised to prevent z-fighting
+    scale=0.21,
+    position=(3, 4.5, -0.01),  # Slightly raised to prevent z-fighting
     collider='sphere'  # Add a box collider to the square
 )
 
 # Create another circle on the platform
 circle4 = Entity(
-    model='cube',
+    model='sphere',
     color=color.white,
-    scale=0.2,
+    scale=0.22,
     position=(1, 4, -0.01),  # Slightly raised to prevent z-fighting
     collider='sphere'  # Add a box collider to the square
 )
@@ -147,8 +147,6 @@ def prevent_illegal_agent_movements(agents, square):
         horizontal_distance_left = left_square - left_platform 
         vertical_distance_top = bottom_square - bottom_platform
         vertical_distance_bottom = top_platform - top_square
-
-        print(horizontal_distance_left, horizontal_distance_right, vertical_distance_top, vertical_distance_bottom)
 
     # Buffer distance to prevent agents from going too close to illegal gaps
     buffer_distance = 0.01  # keep this value small
@@ -361,7 +359,7 @@ def search_cone(agent, target, cone_angle, cone_length, payload=True):
             detected = True
             return detected
     if not detected:
-        agent.color = hsv(350, 0.8, 1)
+        agent.color = color.red
         # rotate the agent 5 degrees
         new_rotation = (agent.rotation_z + 5) % 360 # keep the rotation within 0-360
         agent.rotation_z = new_rotation
@@ -434,58 +432,6 @@ def get_distance_between_two_3D_points(point1, point2):
     # Calculate the Euclidean distance between two 3D points
     return math.sqrt((point1.x - point2.x)**2 + (point1.y - point2.y)**2 + (point1.z - point2.z)**2)
 
-def get_closest_entities(agent, agent_index, angle_jump=5, distance=50):
-    # Raycast around 360 degrees to find the closest entities at each angle
-    found_entities = []
-    for angle_inc in range(0, int(360/angle_jump)):
-        # rotate the agent to the angle
-        new_rotation = (agent.rotation_z + angle_jump * angle_inc) % 360 # keep the rotation within 0-360
-        # print("Agent", agent_index, "rotated to", agent.rotation_z, end=" ")
-        origin = agent.world_position
-        origin.z = -0.1
-        direction = get_vec_at_angle(new_rotation, 1)
-        print("Origin", origin, "Direction", direction)
-        to_ignore = [circle, circle1, circle2, circle3, circle4]
-        ray = raycast(origin, direction, distance=distance, ignore=to_ignore, debug=True)
-
-
-        scales_n_distances = []
-        current_position = agent.position
-        # print("Agent found ", len(ray.entities), "entities at angle", new_rotation)
-        if len(ray.entities) > 0:
-            # print("Agent", index, "\r")
-            for entity in ray.entities:
-                other_position = entity.position
-                distance = get_distance_between_two_3D_points(current_position, other_position)
-                scales_n_distances.append((entity.scale, distance))
-                # print("Scale", entity.scale, "Distance", round(distance, 2))
-                if entity.scale == goal.scale:
-                    print("Agent", agent_index, "found goal at", new_rotation, "degrees")
-                # print("Distance to entity", entity.scale, "is", distance)
-            # print("Agent ", agent_index, "found ", len(ray.entities), "entities")
-
-            closest_entity = None
-            closest_distance = 1000
-            # print("Scales and distances", scales_n_distances)
-            for scale, distance in scales_n_distances:
-                if distance < closest_distance:
-                    closest_distance = distance
-                    closest_entity = scale
-
-            if closest_entity == square.scale:
-                # print("Agent", agent_index, "is closest to the payload")
-                found_entities.append("payload")
-            # if closest_entity == barrier.scale:
-            #     # print("Agent", agent_index, "is closest to the barrier")
-            #     found_entities.append("barrier")
-            if closest_entity == goal.scale:
-                print("Agent", agent_index, "is closest to the goal")
-                # print("Agent", agent_index, "is closest to the goal", scales_n_distances)
-                found_entities.append("goal")
-
-    # print("Agent", agent_index, "found entities", found_entities)
-    return found_entities
-
 def not_ideal_get_closest_entities(agent, full=False):
     # Cast ray in direction of goal not in direction of agent facing
     origin = agent.world_position
@@ -494,34 +440,41 @@ def not_ideal_get_closest_entities(agent, full=False):
     closest_colors = []
     search_list = [goal, circle, circle1, circle2, circle3, circle4]
     search_list.remove(agent)
+
     for other_entity in search_list:
-        direction_goal = Vec3(other_entity.x - agent.x, other_entity.y - agent.y, 0).normalized()
-        to_ignore = [agent]
-        ray = raycast(origin, direction_goal, distance=50, ignore=to_ignore, debug=True)
-        for entity in ray.entities:
-            distance = get_distance_between_two_3D_points(agent.position, entity.position)
-            finds.append((entity.scale, distance, entity.color))
+        if other_entity.color == (0,1,0,1):
+            buffer_value = 0.1
+            top_right = (other_entity.x + other_entity.scale_x/2 - buffer_value, other_entity.y + other_entity.scale_y/2 - buffer_value)
+            top_left = (other_entity.x - other_entity.scale_x/2 + buffer_value, other_entity.y + other_entity.scale_y/2 - buffer_value)
+            bottom_right = (other_entity.x + other_entity.scale_x/2 - buffer_value, other_entity.y - other_entity.scale_y/2+ buffer_value)
+            bottom_left = (other_entity.x - other_entity.scale_x/2+ buffer_value, other_entity.y - other_entity.scale_y/2+ buffer_value)
+            corners = [top_right, top_left, bottom_right, bottom_left]
+            for corner in corners:
+                # direction_goal = Vec3(other_entity.x - agent.x, other_entity.y - agent.y, 0).normalized()
+                direction_goal = Vec3(corner[0] - agent.x, corner[1] - agent.y, 0).normalized()
+                to_ignore = [agent]
+                ray = raycast(origin, direction_goal, distance=50, ignore=to_ignore, debug=True)
+                # for entity in ray.entities:
+                #     distance = get_distance_between_two_3D_points(agent.position, entity.position)
+                #     finds.append((entity.scale, distance, entity.color))
+                found_entity = ray.entity
+                # distance = get_distance_between_two_3D_points(agent.position, found_entity.position)
+                distance = None
+                # finds.append((found_entity.scale, distance, found_entity.color))
+                closest_colors.append(found_entity.color)
 
-        closest_entity = None
-        closest_distance = 1000
-        closest_color = None
-        for scale, distance, color in finds:
-            if distance < closest_distance:
-                closest_distance = distance
-                closest_entity = scale
-                closest_color = color
 
-        closest_colors.append(closest_color)
+            # closest_entity = None
+            # closest_distance = 1000
+            # closest_color = None
+            # for scale, distance, color in finds:
+            #     # closest_colors.append(color)
+            #     if distance < closest_distance:
+            #         closest_distance = distance
+            #         closest_entity = scale
+            #         closest_color = color
 
-    # if closest_entity == goal.scale:
-    #     print("Closest Color (g):", closest_color)
-    #     return "goal"
-    # if closest_entity == square.scale:
-    #     print("Closest Color (p):", closest_color)
-    #     return "payload"
-    # if closest_entity == barrier.scale:
-    #     print("Closest Color (b):", closest_color)
-    #     return "barrier"
+            # closest_colors.append(closest_color)
 
     if full:
         return closest_colors
@@ -661,6 +614,25 @@ def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=1.0):
 
     avoid_agent_and_payload_overlap([agent], square)
 
+# def print_colors():
+#     names = ["Agent 0", "Agent 1", "Agent 2", "Agent 3", "Agent 4", "Payload"]
+#     for index, entity in enumerate([circle, circle1, circle2, circle3, circle4, square]):
+#         if entity.color == (0,1,0,1):
+#             print(names[index], " : Green", end=" -- ")
+#         elif entity.color == (0,0,0,1):
+#             print(names[index], "Black", end=" -- ")
+#         elif entity.color == (0,0,1,1):
+#             print(names[index], "Blue", end=" -- ")
+#         elif entity.color == (1,0,0,1):
+#             print(names[index], "Red", end=" -- ")
+#         elif entity.color == (1,1,1,1):
+#             print(names[index], "White", end=" -- ")
+#         elif color == (0.10000000149011612, 0.8500000238418579,1,1):
+#             print(names[index], "Light Blue", end=" -- ")
+#         else:
+#             print(names[index], "Other Color", end=" -- ")
+#     print()
+
 def show_closest_colors(agent):
     closest_colors = not_ideal_get_closest_entities(agent, full=True)
     text_colors = []
@@ -682,33 +654,32 @@ def show_closest_colors(agent):
 
     print(text_colors)
 
-def check_if_agent_turn_goal(agent):
+def check_if_agent_turn_goal(agent, distance_threshold = 2):
     closest_entity_color = not_ideal_get_closest_entities(agent)
-    if closest_entity_color != "goal": # Agent can't see a goal
+    if closest_entity_color != "goal" and get_distance_between_two_3D_points(square.position, agent.position) > distance_threshold: # Agent can't see a goal
         agent.color = color.green
-        print("Agent turned into goal")
-    show_closest_colors(agent)
+        # print("Agent turned into goal", end=" -- ")
+        # show_closest_colors(agent)
 
     ### Still have to check if angle is greater than 90 between payload and goal
 
-def check_if_goal_turn_agent(agent, distance_threshold = 1):
+def check_if_goal_turn_agent(agent, distance_threshold = 2):
     if not_ideal_get_closest_entities(agent) == "goal": # Agent sees a goal
         agent.color = hsv(190, 0.9, 1) # Light blue
-        print("Agent turned back into agent")
-        # show_closest_colors(agent)
+        # print("Agent turned back into agent")
     elif get_distance_between_two_3D_points(square.position, agent.position) < distance_threshold:
         agent.color = hsv(190, 0.9, 1) # Light blue
-        print("Agent turned back into agent")
-        # show_closest_colors(agent)
+        # print("Agent turned back into agent")
+    # show_closest_colors(agent)
+
 
     ### Still have to implement timeout
 
 # Update function called every frame
 def update():
-    print()
     # Check if the square (payload) has reached the goal
-    # if square.intersects(goal).hit:
-        # print("Success")
+    if square.intersects(goal).hit:
+        print("Success")
     
     agent_targets = {}
 
@@ -743,32 +714,29 @@ def update():
                     #     random_walk_states[index] = True  # Set random walk mode
                     #     continue  # Skip the rest of the loop for this agent
 
-                    # Check if goal is occluded (still working on this)
-                    # clear = search_cone(agent, goal, 360, 50, False)
-                    # found_entities = get_closest_entities(agent, index, angle_jump=5, distance=50)
                     found_entities = not_ideal_get_closest_entities(agent)
-                    # if found_entities != "goal":
-                    #     # print("Goal is occluded for agent", index)
-                    #     # movement = move_agent_to_payload(agent, square, barrier)
-                    # else:
-                    #     # If agent hasn't reached the payload, reset its timer
-                    #     reach_timers[index] = 0
+                    if found_entities != "goal":
+                        # print("Goal is occluded for agent", index)
+                        movement = move_agent_to_payload(agent, square, barrier)
+                    else:
+                        # If agent hasn't reached the payload, reset its timer
+                        reach_timers[index] = 0
                     
                         # move around the the payload (code below is a placeholder) - still working on this
-                        # print("repositioning")
-                        # reposition(agent, square)
+                        print("repositioning")
+                        reposition(agent, square)
                         
-                        # movement = Vec3(0, 0, 0)
+                        movement = Vec3(0, 0, 0)
                 else:  
                     # If agent can't see the payload, reset its timer
                     reach_timers[index] = 0
                     # Agent has not reached the payload yet so move towards it 
                     ### Move the agent towards the payload ###
-                    # movement = move_agent_to_payload(agent, square, barrier)
+                    movement = move_agent_to_payload(agent, square, barrier)
 
         # Check for if agent is colliding with the barrier
-        if agent.intersects(barrier).hit: # If the agent intersects with the barrier, move it back
-            move_in_barrier_direction(agent)
+        # if agent.intersects(barrier).hit: # If the agent intersects with the barrier, move it back
+        #     move_in_barrier_direction(agent)
 
     # Keep the agents and square within the platform bounds
     keep_in_bounds([circle, circle1, circle2, circle3, circle4], square)
@@ -779,10 +747,13 @@ def update():
 
     # Slide barrier side to side
     barrier_speed = 0.5
+    old_position = barrier.position
     slide_barrier(barrier, barrier_speed)
     for entity in [circle, circle1, circle2, circle3, circle4, square]:
-        if entity.intersects(barrier).hit: # If any entity intersects the barrier then stop the barrier
-            if check_entity_at_barrier_level(entity, barrier):
+        if entity.intersects(barrier).hit and check_entity_at_barrier_level(entity, barrier): # If any entity intersects the barrier then stop the barrier
+            old_distance = get_distance_between_two_3D_points(old_position, agent.position)
+            curr_distance = get_distance_between_two_3D_points(barrier.position, agent.position)
+            if old_distance > 1.02*curr_distance:
                 # print("Agent hit")
                 # move_in_barrier_direction(entity)
                 slide_barrier(barrier, barrier_speed, reverse=True)
