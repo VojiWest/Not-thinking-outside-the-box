@@ -143,6 +143,8 @@ def keep_in_bounds(agents, square):
         elif left_agent < left_platform:
             agent.x = left_platform + agent.scale_x / 2
 
+        
+
     # Check if the square is outside the platform, if so, push it back in
     if top_square > top_platform:
         square.y = top_platform - square.scale_y / 2
@@ -414,7 +416,24 @@ def not_ideal_get_closest_entities(agent):
 def move_in_barrier_direction(agent):
     barrier_speed = 0.5
     barrier_direction = barrier_object.direction
-    agent.position += Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
+    move_distance = time.dt * barrier_speed * barrier_direction
+    old_position = barrier.position - Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
+    
+    # Move the agent in the direction of the barrier
+    agent.position += Vec3(move_distance, 0, 0)
+
+    # Check for collision again to prevent overlapping
+    if agent.intersects(barrier).hit:  # If agent and box overlap
+        old_distance = get_distance_between_two_3D_points(old_position, agent.position)
+        curr_distance = get_distance_between_two_3D_points(barrier.position, agent.position)
+        if old_distance > 1.02*curr_distance:
+
+            # Calculate the direction to push them away from each other
+            direction = Vec3(agent.position.x - barrier.position.x, agent.position.y - barrier.position.y, 0).normalized()
+            
+            # Push the agent and the box away from each other
+            agent.position += direction * time.dt * 0.5  # Push agent away
+            # barrier.position -= direction * time.dt * 0.5    # Push box away
 
 def reposition(agent, obj):
     speed = 0.01
@@ -521,6 +540,8 @@ def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=1.0):
         random_angle = random.uniform(0, 2 * math.pi)
         random_walk_directions[agent_id] = Vec3(math.cos(random_angle), math.sin(random_angle), 0)
 
+    avoid_agent_and_payload_overlap([agent], square)
+
 # Update function called every frame
 def update():
 
@@ -549,7 +570,7 @@ def update():
                 reach_timers[index] += time.dt  # Increment by delta time (time between frames)
                 
                 # if reach_timers[index] >= reach_threshold:
-                #     # print(f"Agent {index} is starting random walk after 10 seconds at the payload.")
+                #     print(f"Agent {index} is starting random walk after 10 seconds at the payload.")
                 #     random_walk_states[index] = True  # Set random walk mode
                 #     continue  # Skip the rest of the loop for this agent
 
