@@ -594,7 +594,7 @@ def update():
 
         # Check for if agent is colliding with the barrier
         if agent.intersects(barrier).hit: # If the agent intersects with the barrier, move it back
-            move_in_barrier_direction(agent, barrier)
+            move_in_barrier_direction(agent)
 
     # Keep the agents and square within the platform bounds
     keep_in_bounds([circle, circle1, circle2, circle3, circle4], square)
