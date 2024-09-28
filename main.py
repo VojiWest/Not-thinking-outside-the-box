@@ -1,6 +1,12 @@
 from ursina import *
 import math
 import numpy as np
+from entities.agent import Agent
+from entities.platform import Platform
+from entities.barrier import Barrier
+from entities.payload import Payload
+from entities.goal import Goal
+
 
 # Initialize the Ursina application
 app = Ursina()
@@ -14,101 +20,16 @@ move_speed = 0.75
 
 """ CREATE ENTITIES """ # I should probably do this in a better way, but for now this is what I have
 
-# Create a flat 2D platform (background)
-platform = Entity(
-    model='quad',  # Use a 2D quad
-    scale=(10, 10),
-    color=color.pink,
-    position=(0, 0, 1),  # Flat on the x-y plane at z=1 (which is further away from the camera) to prevent z-fighting or overlapping with other entities
-    texture='white_cube',
-    collider='box'  # Add a box collider to the platform to detect collisions
-)
-
-# create a barrier
-barrier = Entity(
-    model='cube',
-    scale=(6.0, 0.75, 0.5), # added z scale (0.5) for testing
-    color=color.black,
-    position=(-2, -2, -0.01),  # Slightly raised to prevent z-fighting
-    collider='box'  # Add a box collider to the square
-)
-
-# Create goal
-goal = Entity(
-    model='cube',
-    scale=(2, 2),
-    color=color.green,
-    position=(-3, -3.5, -0.01),  # Slightly raised to prevent z-fighting
-    collider='box'  # Add a box collider to the square
-)
-
-# Create a square (payload) on the platform (using quad as a 2D square)
-square = Entity(
-    model='cube',
-    color=color.blue,
-    scale=(1.2,1.2),  # Scale the square to be smaller
-    position=(2, 2, -0.01),  # Slightly raised to prevent z-fighting
-    collider='box'  # Add a box collider to the square
-)
-
-### Create Agents ###
-
-# Create a circle on the platform
-
-### make this a child class so additional variables can be stored
-circle = Entity(
-    model='sphere',
-    color=color.white,
-    scale=0.2,
-    position=(-1, 3, -0.01),  # Slightly raised to prevent z-fighting
-    collider='sphere'  # Add a box collider to the square
-)
-
-# Create another circle on the platform
-circle1 = Entity(
-    model='sphere',
-    color=color.white,
-    scale=0.19,
-    position=(-3, 3.75, -0.01),  # Slightly raised to prevent z-fighting
-    collider='sphere'  # Add a box collider to the square
-)
-
-# Create another circle on the platform
-circle2 = Entity(
-    model='sphere',
-    color=color.white,
-    scale=0.18,
-    position=(-2, 4.25, -0.01),  # Slightly raised to prevent z-fighting
-    collider='sphere'  # Add a box collider to the square
-)
-
-# Create another circle on the platform
-circle3 = Entity(
-    model='sphere',
-    color=color.white,
-    scale=0.21,
-    position=(3, 4.5, -0.01),  # Slightly raised to prevent z-fighting
-    collider='sphere'  # Add a box collider to the square
-)
-
-# Create another circle on the platform
-circle4 = Entity(
-    model='sphere',
-    color=color.white,
-    scale=0.22,
-    position=(1, 4, -0.01),  # Slightly raised to prevent z-fighting
-    collider='sphere'  # Add a box collider to the square
-)
-
-# Create another circle on the platform
-circle5 = Entity(
-    model='cube',
-    color=color.white,
-    scale=0.2,
-    position=(1, -3.5, -0.01),  # Slightly raised to prevent z-fighting
-    collider='sphere'  # Add a box collider to the square
-)
-
+platform = Platform()
+barrier = Barrier(position=(-2, -2, -0.01), direction=1) 
+goal = Goal(position=(-3, -3.5, -0.01))
+square = Payload(position=(2, 2, -0.01), scale=(1.2, 1.2))
+circle = Agent(position=(-1, 3, -0.01), scale=0.2)
+circle1 = Agent(position=(-3, 3.75, -0.01), scale=0.19)
+circle2 = Agent(position=(-2, 4.25, -0.01), scale=0.18)
+circle3 = Agent(position=(3, 4.5, -0.01), scale=0.21)
+circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
+circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
 
 class Barrier():
     def __init__(self, direction):
