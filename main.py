@@ -8,22 +8,29 @@ from entities.payload import Payload
 from entities.goal import Goal
 
 
+
 # Initialize the Ursina application
 app = Ursina()
 
+window.borderless = False  # Make sure this is set
+window.size = (960, 600)   # Example size
 # Set up the camera for 2D view by enabling orthographic mode
 camera.orthographic = True
 camera.fov = 10  # Field of view to adjust the zoom level
 
 # Define movement speed of agents
 move_speed = 0.75
+current_map = 0
 
 """ CREATE ENTITIES """ # I should probably do this in a better way, but for now this is what I have
 
+
 platform = Platform()
+
+
 barrier = Barrier(position=(-2, -2, -0.01), direction=1) 
 goal = Goal(position=(-3, -3.5, -0.01))
-square = Payload(position=(2, 2, -0.01), scale=(1.2, 1.2))
+square = Payload(position=(2, 3, -0.01), scale=(1.2, 1.2))
 circle = Agent(position=(-1, 3, -0.01), scale=0.2)
 circle1 = Agent(position=(-3, 3.75, -0.01), scale=0.19)
 circle2 = Agent(position=(-2, 4.25, -0.01), scale=0.18)
@@ -42,6 +49,117 @@ circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
 # Initialize the barrier
 # barrier_object = Barrier(0.5)
 
+
+""" CREATE MAPS """
+
+barriers = []
+agents = []
+
+
+# Function to create maps
+def create_map(map_id):
+    global circle, circle1, circle2, circle3, circle4, circle5, square, goal, barrier
+
+    # Clear existing entities (if needed)
+    for entity in scene.entities:
+        if entity != platform:  # Keep the platform persistent
+            entity.disable()
+
+    if map_id == 0:
+        # Map 0: Initial configuration that we had from before
+        circle = Agent(position=(-1, 3, -0.01), scale=0.2)
+        circle1 = Agent(position=(-3, 3.75, -0.01), scale=0.19)
+        circle2 = Agent(position=(-2, 4.25, -0.01), scale=0.18)
+        circle3 = Agent(position=(3, 4.5, -0.01), scale=0.21)
+        circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
+        circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
+
+        square = Payload(position=(2, 2, -0.01), scale=(1.2, 1.2))
+        goal = Goal(position=(-3, -3.5, -0.01))
+        barrier = Barrier(position=(-2, -2, -0.01), direction=1)
+
+        barriers.append(barrier)
+        agents.append(circle)
+        agents.append(circle1)
+        agents.append(circle2)
+        agents.append(circle3)
+        agents.append(circle4)
+        agents.append(circle5)
+
+    elif map_id == 1:
+        # Map 1: One barrier in the middle moving side to side
+        circle = Agent(position=(-1, 3, -0.01), scale=0.2)
+        circle1 = Agent(position=(-3, 3.75, -0.01), scale=0.19)
+        circle2 = Agent(position=(-2, 4.25, -0.01), scale=0.18)
+        circle3 = Agent(position=(3, 4.5, -0.01), scale=0.21)
+        circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
+        circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
+        
+        square = Payload(position=(2, 2, -0.01), scale=(1.2, 1.2))
+        goal = Goal(position=(-3, -3.5, -0.01))
+        barrier = Barrier(position=(0, 0, -0.01), scale=(4, 0.5, 0.5), direction=1)
+
+        barriers.append(barrier)
+        agents.append(circle)
+        agents.append(circle1)
+        agents.append(circle2)
+        agents.append(circle3)
+        agents.append(circle4)
+        agents.append(circle5)
+
+    elif map_id == 2:
+        # Map 2: Two vertical barriers moving in opposite directions
+        circle = Agent(position=(-1, 3, -0.01), scale=0.2)
+        circle1 = Agent(position=(-3, 3.75, -0.01), scale=0.19)
+        circle2 = Agent(position=(-2, 4.25, -0.01), scale=0.18)
+        circle3 = Agent(position=(3, 4.5, -0.01), scale=0.21)
+        circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
+        circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
+
+        square = Payload(position=(4, 3, -0.01), scale=(1.2, 1.2))
+        goal = Goal(position=(-3, -3.5, -0.01))
+        barrier1 = Barrier(position=(0, 4, -0.01), scale=(0.5, 4, 0.5), direction=1)
+        barrier2 = Barrier(position=(0, -4, -0.01), scale=(0.5, 4, 0.5), direction=-1)
+
+        barriers.append(barrier1)
+        barriers.append(barrier2)
+        agents.append(circle)
+        agents.append(circle1)
+        agents.append(circle2)
+        agents.append(circle3)
+        agents.append(circle4)
+        agents.append(circle5)
+
+    elif map_id == 3:
+        # Map 3: Two horizontal barriers, one higher than the other, moving in opposite directions
+        circle = Agent(position=(-1, 3, -0.01), scale=0.2)
+        circle1 = Agent(position=(-3, 3.75, -0.01), scale=0.19)
+        circle2 = Agent(position=(-2, 4.25, -0.01), scale=0.18)
+        circle3 = Agent(position=(3, 4.5, -0.01), scale=0.21)
+        circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
+        circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
+
+        square = Payload(position=(2, 4, -0.01), scale=(1.2, 1.2))
+        goal = Goal(position=(-3, -3.5, -0.01))
+        barrier1 = Barrier(position=(-2, 1, -0.01), scale=(4, 0.5, 0.5), direction=1)
+        barrier2 = Barrier(position=(2, -2, -0.01), scale=(4, 0.5, 0.5), direction=-1)
+
+        barriers.append(barrier1)
+        barriers.append(barrier2)
+        agents.append(circle)
+        agents.append(circle1)
+        agents.append(circle2)
+        agents.append(circle3)
+        agents.append(circle4)
+        agents.append(circle5)
+
+
+#### ENTER THE INDEX OF MAP YOU WANT HERE ####
+
+create_map(0)
+
+
+############################################################################################
 
 def prevent_illegal_agent_movements(agents, square):
 
@@ -94,14 +212,14 @@ def prevent_illegal_agent_movements(agents, square):
                 new_x = left_platform - agent.scale_x / 2 - buffer_distance
                 agent.x = max(new_x, agent.x)  # Only move if needed to avoid a gap
                 keep_in_bounds(agents, square)
-                avoid_agent_and_payload_overlap(agents, square)
+                avoid_overlaps(agents, square, barriers)
         if horizontal_distance_left < agent.scale_x:
             if left_agent < right_platform:
                 # Move the agent slightly right to avoid the gap
                 new_x = right_platform + agent.scale_x / 2 + buffer_distance
                 agent.x = min(new_x, agent.x)  # Only move if needed to avoid a gap
                 keep_in_bounds(agents, square)
-                avoid_agent_and_payload_overlap(agents, square)
+                avoid_overlaps(agents, square, barriers)
 
         # Illegal Vertical gaps
         if vertical_distance_top < agent.scale_y:
@@ -110,14 +228,14 @@ def prevent_illegal_agent_movements(agents, square):
                 new_y = bottom_platform - agent.scale_y / 2 - buffer_distance
                 agent.y = max(new_y, agent.y)  # Only move if needed
                 keep_in_bounds(agents, square)
-                avoid_agent_and_payload_overlap(agents, square)
+                avoid_overlaps(agents, square, barriers)
         if vertical_distance_bottom < agent.scale_y:
             if bottom_agent < top_platform:
                 # Move the agent slightly up to avoid the gap
                 new_y = top_platform + agent.scale_y / 2 + buffer_distance
                 agent.y = min(new_y, agent.y)  # Only move if needed
                 keep_in_bounds(agents, square)
-                avoid_agent_and_payload_overlap(agents, square)
+                avoid_overlaps(agents, square, barriers)
 
 
 def keep_in_bounds(agents, square):
@@ -187,41 +305,47 @@ def get_angle_between_two_lines(line1, line2):
 
     return angle
 
-def avoid_agent_and_payload_overlap(agents, box):
-    ### This function prevents agents from overlapping each other ###
+def avoid_overlaps(agents, box, barriers):
+    ### This function prevents agents, payloads, and barriers from overlapping each other ###
 
-    for i, agent in enumerate(agents):
-
-        # Check for collision again to prevent overlapping
+    for agent in agents:
+        # Check for collision with the box
         if agent.intersects(box).hit:  # If agent and box overlap
             # Calculate the direction to push them away from each other
             direction = Vec3(agent.x - box.x, agent.y - box.y, 0).normalized()
-            
-            # Push the agent and the box away from each other
-            agent.position += direction * time.dt * 0.5  # Push agent away
-            # box.position -= direction * time.dt * 0.5  # Push box away
-    
-        for j, other_agent in enumerate(agents):
-            if i != j and agent.intersects(other_agent).hit:  # If agents overlap
+            # Push agent away from the box
+            agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
+
+        # Check for collision between agents
+        for other_agent in agents:
+            if agent != other_agent and agent.intersects(other_agent).hit:  # If agents overlap
                 # Calculate the direction to push them away from each other
                 direction = Vec3(agent.x - other_agent.x, agent.y - other_agent.y, 0).normalized()
-                
-                # Push them away by a small amount
+                # Push them away
                 agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
-                # other_agent.position -= direction * time.dt * 0.5
+
+        # Check for collision with barriers
+        for barrier in barriers:
+            if agent.intersects(barrier).hit:  # If agent overlaps with a barrier
+                # Calculate the distance between the agent and the barrier
+                direction = Vec3(agent.x - barrier.x, agent.y - barrier.y, 0).normalized()
+                # Push agent away from the box
+                agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
+
+                # TO DO: take into account how the direction of the barrier affects how the collision is being handled 
 
 
-def avoid_barrier_and_payload_overlap(barrier, box):
-    ### This function prevents the barrier from overlapping the box/payload/square ###
 
-    # Check for collision between the barrier and the box
-    if barrier.intersects(box).hit:  # If barrier and box overlap
-        # Calculate the direction to push them away from each other
-        direction = Vec3(barrier.x - box.x, barrier.y - box.y, 0).normalized()
+    # Check for collision between the barriers and the box
+    for barrier in barriers:
+        if barrier.intersects(box).hit:  # If barrier and box overlap
+            # Calculate the direction to push them away from each other
+            direction = Vec3(barrier.x - box.x, barrier.y - box.y, 0).normalized()
+            # Push the barrier away from the box
+            barrier.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
 
-        # Push the barrier away from the box
-        barrier.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
-        # box.position -= direction * time.dt * 0.5
+
+
             
 
 def check_entity_at_barrier_level(entity, barrier, thershold=0.05):
@@ -337,32 +461,36 @@ def slide_barrier(barrier, barrier_speed, reverse=False):
         barrier.update_direction()
     elif barrier.position.x < -2:
         barrier.update_direction()
+
     barrier_direction = barrier.direction
     if reverse:
         barrier.position -= Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
     else:
         barrier.position += Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
 
-def move_agent_to_payload(agent, square, barrier):
-    ### Move the agent towards the payload ###
-    square_direction = Vec3(square.x - agent.x, square.y - agent.y, 0) # Calculate the direction vector to the payload
-    agent.position += square_direction.normalized() * time.dt * move_speed # Move the agent towards the payload
-    movement = square_direction.normalized() * time.dt * move_speed # Calculate the movement vector (for later use if we need to move back since we hit an obstacle)
+def move_agent_to_payload(agent, square, barriers):
+    square_direction = Vec3(square.x - agent.x, square.y - agent.y, 0)  # Calculate the direction vector to the payload
+    agent.position += square_direction.normalized() * time.dt * move_speed  # Move the agent towards the payload
+    movement = square_direction.normalized() * time.dt * move_speed  # Calculate the movement vector
 
     # Check if the agent intersects with the payload
     if agent.intersects(square).hit:
-        max_square_direction = get_main_direction(square_direction) # Calculate the push direction based on the movement vector (to prevent sticky behavior)
+        max_square_direction = get_main_direction(square_direction)  # Calculate the push direction based on the movement vector
 
-        # Calculate the push direction based on the movement vector
+        # Move the payload
         square.position += max_square_direction * time.dt * move_speed
-        if square.intersects(barrier).hit: # If the payload intersects with the barrier after moving, move it back
-            square.position -= max_square_direction * time.dt * move_speed
+
+        # Check for intersections with all barriers
+        for barrier in barriers:
+            if square.intersects(barrier).hit:  # If the payload intersects with a barrier after moving, move it back
+                square.position -= max_square_direction * time.dt * move_speed
+                break  # Stop checking further barriers once one collision is found
 
         # Check for collision again to prevent overlapping
-        if agent.intersects(square).hit: # If the agent intersects with the payload after moving, move it back
+        if agent.intersects(square).hit:  # If the agent intersects with the payload after moving, move it back
             agent.position -= movement
 
-    return movement
+        return movement
 
 def get_distance_between_two_3D_points(point1, point2):
     # Calculate the Euclidean distance between two 3D points
@@ -390,6 +518,17 @@ def not_ideal_get_closest_entities(agent, full=False):
                 direction_goal = Vec3(corner[0] - agent.x, corner[1] - agent.y, 0).normalized()
                 to_ignore = [agent]
                 ray = raycast(origin, direction_goal, distance=50, ignore=to_ignore, debug=True)
+
+
+                # Check if the raycast hit an entity
+                found_entity = ray.entity
+                if found_entity:  # Ensure found_entity is not None
+                    closest_colors.append(found_entity.color)
+                else:
+                    # Handle case where no entity was found, if needed
+                    continue  # Skip to the next corner
+
+
                 # for entity in ray.entities:
                 #     distance = get_distance_between_two_3D_points(agent.position, entity.position)
                 #     finds.append((entity.scale, distance, entity.color))
@@ -548,7 +687,7 @@ def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=1.0):
         random_angle = random.uniform(0, 2 * math.pi)
         random_walk_directions[agent_id] = Vec3(math.cos(random_angle), math.sin(random_angle), 0)
 
-    avoid_agent_and_payload_overlap([agent], square)
+    avoid_overlaps([agent], square, barriers)
 
 # def print_colors():
 #     names = ["Agent 0", "Agent 1", "Agent 2", "Agent 3", "Agent 4", "Payload"]
@@ -653,7 +792,7 @@ def update():
                     found_entities = not_ideal_get_closest_entities(agent)
                     if found_entities != "goal":
                         # print("Goal is occluded for agent", index)
-                        movement = move_agent_to_payload(agent, square, barrier)
+                        movement = move_agent_to_payload(agent, square, barriers)
                     else:
                         # If agent hasn't reached the payload, reset its timer
                         reach_timers[index] = 0
@@ -668,31 +807,33 @@ def update():
                     reach_timers[index] = 0
                     # Agent has not reached the payload yet so move towards it 
                     ### Move the agent towards the payload ###
-                    movement = move_agent_to_payload(agent, square, barrier)
+                    movement = move_agent_to_payload(agent, square, barriers)
 
         # Check for if agent is colliding with the barrier
         # if agent.intersects(barrier).hit: # If the agent intersects with the barrier, move it back
         #     move_in_barrier_direction(agent)
 
     # Keep the agents and square within the platform bounds
-    keep_in_bounds([circle, circle1, circle2, circle3, circle4], square)
-    prevent_illegal_agent_movements([circle, circle1, circle2, circle3, circle4], square)
-    avoid_agent_and_payload_overlap([circle, circle1, circle2, circle3, circle4], square)
-    avoid_barrier_and_payload_overlap(barrier, square)
+    keep_in_bounds(agents, square)
+    prevent_illegal_agent_movements(agents, square)
+    avoid_overlaps(agents, square, barriers)
 
     # Slide barrier side to side
     barrier_speed = 0.5
-    old_position = barrier.position
-    slide_barrier(barrier, barrier_speed)
-    for entity in [circle, circle1, circle2, circle3, circle4, square]:
-        if entity.intersects(barrier).hit and check_entity_at_barrier_level(entity, barrier): # If any entity intersects the barrier then stop the barrier
-            old_distance = get_distance_between_two_3D_points(old_position, agent.position)
-            curr_distance = get_distance_between_two_3D_points(barrier.position, agent.position)
-            if old_distance > 1.02*curr_distance:
-                # print("Agent hit")
-                # move_in_barrier_direction(entity)
-                slide_barrier(barrier, barrier_speed, reverse=True)
-                break
+    for barrier in barriers:  # Loop through all barriers in the list
+        old_position = barrier.position
+        slide_barrier(barrier, barrier_speed)
+        
+        for entity in [circle, circle1, circle2, circle3, circle4, square]:
+            if entity.intersects(barrier).hit and check_entity_at_barrier_level(entity, barrier):
+                old_distance = get_distance_between_two_3D_points(old_position, agent.position)
+                curr_distance = get_distance_between_two_3D_points(barrier.position, agent.position)
+                
+                if old_distance > 1.02 * curr_distance:
+                    # print("Agent hit")
+                    move_in_barrier_direction(entity)
+                    slide_barrier(barrier, barrier_speed, reverse=True)
+                    break  # Stop further checks once one barrier interaction occurs
 
 
 # Run the Ursina application
