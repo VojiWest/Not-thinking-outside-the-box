@@ -62,7 +62,7 @@ def prevent_illegal_agent_movements(agents, square):
     vertical_distance_top = bottom_square - bottom_platform
     vertical_distance_bottom = top_platform - top_square
 
-    print(horizontal_distance_left, horizontal_distance_right, vertical_distance_top, vertical_distance_bottom)
+    # print(horizontal_distance_left, horizontal_distance_right, vertical_distance_top, vertical_distance_bottom)
 
 
     for agent in agents:

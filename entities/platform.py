@@ -1,5 +1,6 @@
 from ursina import Entity, color
 
+
 class Platform(Entity):
     def __init__(self):
         super().__init__(
