@@ -31,16 +31,16 @@ circle3 = Agent(position=(3, 4.5, -0.01), scale=0.21)
 circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
 circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
 
-class Barrier():
-    def __init__(self, direction):
-        self.direction = direction
+# class Barrier():
+#     def __init__(self, direction):
+#         self.direction = direction
 
-    def update(self):
-        # Reverse the direction of the barrier
-        self.direction = self.direction * -1
+#     def update(self):
+#         # Reverse the direction of the barrier
+#         self.direction = self.direction * -1
 
 # Initialize the barrier
-barrier_object = Barrier(0.5)
+# barrier_object = Barrier(0.5)
 
 
 def prevent_illegal_agent_movements(agents, square):
@@ -210,6 +210,18 @@ def avoid_agent_and_payload_overlap(agents, box):
                 agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
                 # other_agent.position -= direction * time.dt * 0.5
 
+
+def avoid_barrier_and_payload_overlap(barrier, box):
+    ### This function prevents the barrier from overlapping the box/payload/square ###
+
+    # Check for collision between the barrier and the box
+    if barrier.intersects(box).hit:  # If barrier and box overlap
+        # Calculate the direction to push them away from each other
+        direction = Vec3(barrier.x - box.x, barrier.y - box.y, 0).normalized()
+
+        # Push the barrier away from the box
+        barrier.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
+        # box.position -= direction * time.dt * 0.5
             
 
 def check_entity_at_barrier_level(entity, barrier, thershold=0.05):
@@ -322,10 +334,10 @@ def slide_barrier(barrier, barrier_speed, reverse=False):
     # Slide barrier side to side
     barrier_speed = 0.5
     if barrier.position.x > 2:
-        barrier_object.update()
+        barrier.update_direction()
     elif barrier.position.x < -2:
-        barrier_object.update()
-    barrier_direction = barrier_object.direction
+        barrier.update_direction()
+    barrier_direction = barrier.direction
     if reverse:
         barrier.position -= Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
     else:
@@ -410,7 +422,7 @@ def not_ideal_get_closest_entities(agent, full=False):
 
 def move_in_barrier_direction(agent):
     barrier_speed = 0.5
-    barrier_direction = barrier_object.direction
+    barrier_direction = barrier.direction
     move_distance = time.dt * barrier_speed * barrier_direction
     old_position = barrier.position - Vec3(time.dt * barrier_speed * barrier_direction, 0, 0)
     
@@ -664,10 +676,9 @@ def update():
 
     # Keep the agents and square within the platform bounds
     keep_in_bounds([circle, circle1, circle2, circle3, circle4], square)
-
     prevent_illegal_agent_movements([circle, circle1, circle2, circle3, circle4], square)
-
     avoid_agent_and_payload_overlap([circle, circle1, circle2, circle3, circle4], square)
+    avoid_barrier_and_payload_overlap(barrier, square)
 
     # Slide barrier side to side
     barrier_speed = 0.5

@@ -13,9 +13,8 @@ class Barrier(Entity):
         )
         self.direction = direction
 
-    def update(self):
+    def update_direction(self):
         # Reverse the direction of the barrier when the update is called
-        self.direction *= -1
-        self.position.x += self.direction * 0.1  # Example of moving the barrier back and forth
+        self.direction = self.direction * -1
 
     
