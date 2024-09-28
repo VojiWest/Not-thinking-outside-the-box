@@ -154,9 +154,10 @@ def create_map(map_id):
         agents.append(circle5)
 
 
-#### ENTER THE INDEX OF MAP YOU WANT HERE ####
+#### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
 create_map(0)
+moving_barriers = True
 
 
 ############################################################################################
@@ -818,22 +819,24 @@ def update():
     prevent_illegal_agent_movements(agents, square)
     avoid_overlaps(agents, square, barriers)
 
-    # Slide barrier side to side
-    barrier_speed = 0.5
-    for barrier in barriers:  # Loop through all barriers in the list
-        old_position = barrier.position
-        slide_barrier(barrier, barrier_speed)
-        
-        for entity in [circle, circle1, circle2, circle3, circle4, square]:
-            if entity.intersects(barrier).hit and check_entity_at_barrier_level(entity, barrier):
-                old_distance = get_distance_between_two_3D_points(old_position, agent.position)
-                curr_distance = get_distance_between_two_3D_points(barrier.position, agent.position)
-                
-                if old_distance > 1.02 * curr_distance:
-                    # print("Agent hit")
-                    move_in_barrier_direction(entity)
-                    slide_barrier(barrier, barrier_speed, reverse=True)
-                    break  # Stop further checks once one barrier interaction occurs
+    if moving_barriers == True: 
+
+        # Slide barrier side to side
+        barrier_speed = 0.5
+        for barrier in barriers:  # Loop through all barriers in the list
+            old_position = barrier.position
+            slide_barrier(barrier, barrier_speed)
+            
+            for entity in [circle, circle1, circle2, circle3, circle4, square]:
+                if entity.intersects(barrier).hit and check_entity_at_barrier_level(entity, barrier):
+                    old_distance = get_distance_between_two_3D_points(old_position, agent.position)
+                    curr_distance = get_distance_between_two_3D_points(barrier.position, agent.position)
+                    
+                    if old_distance > 1.02 * curr_distance:
+                        # print("Agent hit")
+                        move_in_barrier_direction(entity)
+                        slide_barrier(barrier, barrier_speed, reverse=True)
+                        break  # Stop further checks once one barrier interaction occurs
 
 
 # Run the Ursina application
