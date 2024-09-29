@@ -1,11 +1,13 @@
 from ursina import *
 import math
 import numpy as np
+from random import uniform
 from entities.agent import Agent
 from entities.platform import Platform
 from entities.barrier import Barrier
 from entities.payload import Payload
 from entities.goal import Goal
+from entities.barrier_agent import Barrier_Agent
 
 
 
@@ -21,6 +23,8 @@ camera.fov = 10  # Field of view to adjust the zoom level
 # Define movement speed of agents
 move_speed = 0.75
 current_map = 0
+
+random_walk_directions = {}
 
 """ CREATE ENTITIES """ # I should probably do this in a better way, but for now this is what I have
 
@@ -38,22 +42,12 @@ circle3 = Agent(position=(3, 4.5, -0.01), scale=0.21)
 circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
 circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
 
-# class Barrier():
-#     def __init__(self, direction):
-#         self.direction = direction
-
-#     def update(self):
-#         # Reverse the direction of the barrier
-#         self.direction = self.direction * -1
-
-# Initialize the barrier
-# barrier_object = Barrier(0.5)
-
 
 """ CREATE MAPS """
 
 barriers = []
 agents = []
+barrier_agents = []
 
 
 # Function to create maps
@@ -153,6 +147,35 @@ def create_map(map_id):
         agents.append(circle4)
         agents.append(circle5)
 
+    elif map_id == 4:
+        # Map 4: Barriers appear as agents doing a random walk
+        circle = Agent(position=(-1, 3, -0.01), scale=0.2)
+        circle1 = Agent(position=(-3, 3.75, -0.01), scale=0.19)
+        circle2 = Agent(position=(-2, 4.25, -0.01), scale=0.18)
+        circle3 = Agent(position=(3, 4.5, -0.01), scale=0.21)
+        circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
+        circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
+        
+        # Initialize 10 barrier agents with random positions and uniform scales
+        for i in range(10):
+            # Generate random positions within a specific range
+            x = uniform(-5, 5)  # Random x position between -5 and 5
+            y = uniform(-3, 3)  # Random y position between -3 and 3
+            z = uniform(-5, 5)  # Random z position between -5 and 5
+            position = Vec3(x, y, z)
+            
+            agent = Barrier_Agent(position=position, scale=0.2)
+            barrier_agents.append(agent)
+
+        square = Payload(position=(2, 2, -0.01), scale=(1.2, 1.2))
+        goal = Goal(position=(-3, -3.5, -0.01))
+
+        agents.append(circle)
+        agents.append(circle1)
+        agents.append(circle2)
+        agents.append(circle3)
+        agents.append(circle4)
+        agents.append(circle5)
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
@@ -689,6 +712,8 @@ def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=1.0):
         random_walk_directions[agent_id] = Vec3(math.cos(random_angle), math.sin(random_angle), 0)
 
     avoid_overlaps([agent], square, barriers)
+    keep_in_bounds(barrier_agents, square)
+
 
 # def print_colors():
 #     names = ["Agent 0", "Agent 1", "Agent 2", "Agent 3", "Agent 4", "Payload"]
@@ -814,7 +839,10 @@ def update():
         # if agent.intersects(barrier).hit: # If the agent intersects with the barrier, move it back
         #     move_in_barrier_direction(agent)
 
-    # Keep the agents and square within the platform bounds
+     # Apply random walk to barrier agents
+    for barrier_id, barrier_agent in enumerate(barrier_agents):
+        random_walk(barrier_agent, barrier_id)
+    
     keep_in_bounds(agents, square)
     prevent_illegal_agent_movements(agents, square)
     avoid_overlaps(agents, square, barriers)
