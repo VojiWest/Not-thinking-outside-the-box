@@ -156,7 +156,7 @@ def create_map(map_id):
         circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
         circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
         
-        # Initialize 10 barrier agents with random positions and uniform scales
+        # Initialize 10 barrier agents with random positions
         for i in range(10):
             # Generate random positions within a specific range
             x = uniform(-5, 5)  # Random x position between -5 and 5
@@ -164,7 +164,7 @@ def create_map(map_id):
             z = uniform(-5, 5)  # Random z position between -5 and 5
             position = Vec3(x, y, z)
             
-            agent = Barrier_Agent(position=position, scale=0.2)
+            agent = Barrier_Agent(position=position, scale=1)
             barrier_agents.append(agent)
 
         square = Payload(position=(2, 2, -0.01), scale=(1.2, 1.2))
@@ -179,7 +179,7 @@ def create_map(map_id):
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
-create_map(0)
+create_map(4)
 moving_barriers = True
 
 
