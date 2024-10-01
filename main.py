@@ -112,7 +112,7 @@ def create_map(map_id):
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
-create_map(1)
+create_map(4)
 moving_barriers = False
 
 
@@ -262,6 +262,37 @@ def avoid_overlaps(agents, box, barriers):
                 agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
 
                 # TO DO: take into account how the direction of the barrier affects how the collision is being handled 
+
+        for barrier_agent in barrier_agents:
+            if agent.intersects(barrier_agent).hit:  # If agent overlaps with a barrier
+                print("Agent hit")
+                # Calculate the distance between the agent and the barrier
+                direction = Vec3(agent.x - barrier_agent.x, agent.y - barrier_agent.y, 0).normalized()
+                # Push agent away from the barrier_agent
+                agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
+
+            if box.intersects(barrier_agent).hit:
+                # Calculate the direction to push them away from each other
+                direction = Vec3(box.x - barrier_agent.x, box.y - barrier_agent.y, 0).normalized()
+                # Push the barrier away from the box
+                box.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
+
+            # if goal.intersects(barrier_agent).hit:
+            #     # Calculate the direction to push them away from each other
+            #     direction = Vec3(goal.x - barrier_agent.x, goal.y - barrier_agent.y, 0).normalized()
+            #     # Push the barrier away from the box
+            #     goal.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
+
+            for other_barrier_agent in barrier_agents:
+                if barrier_agent != other_barrier_agent and barrier_agent.intersects(other_barrier_agent).hit:  # If agents overlap
+                    # Calculate the direction to push them away from each other
+                    direction = Vec3(barrier_agent.x - other_barrier_agent.x, barrier_agent.y - other_barrier_agent.y, 0).normalized()
+                    # Push them away
+                    barrier_agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
+
+
+
+
 
     # Check for collision between the barriers and the box
     # for barrier in barriers:
