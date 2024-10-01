@@ -2,7 +2,7 @@ from ursina import Entity, color, Vec3, time
 
 
 class Barrier(Entity):
-    def __init__(self, position, scale=(6.0, 0.75, 0.5), color=color.black, direction=1):
+    def __init__(self, position, scale=(4.0, 0.75, 0.2), color=color.black, direction=1):
         # Initialize the parent Entity with visual attributes
         super().__init__(
             model='cube',
