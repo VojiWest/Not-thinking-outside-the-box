@@ -265,7 +265,7 @@ def avoid_overlaps(agents, box, barriers):
 
         for barrier_agent in barrier_agents:
             if agent.intersects(barrier_agent).hit:  # If agent overlaps with a barrier
-                print("Agent hit")
+                # print("Agent hit")
                 # Calculate the distance between the agent and the barrier
                 direction = Vec3(agent.x - barrier_agent.x, agent.y - barrier_agent.y, 0).normalized()
                 # Push agent away from the barrier_agent
@@ -695,7 +695,7 @@ barrier_agents = []
 
 # Function to create maps
 def create_map(map_id):
-    global circle, circle1, circle2, circle3, circle4, circle5, square, goal, barrier
+    global circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square, barrier
 
     # Clear existing entities (if needed)
     for entity in scene.entities:
@@ -704,42 +704,40 @@ def create_map(map_id):
 
     if map_id == 0:
         # Map 0: Initial configuration that we had from before
-        circle, circle1, circle2, circle3, circle4, circle5, goal, square = create_agents_goal_and_payload()
-
         barrier = Barrier(position=(-2, -2, -0.01), direction=1)
         barriers.append(barrier)
 
+        circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload()
+
     elif map_id == 1:
         # Map 1: One barrier in the middle moving side to side
-        circle, circle1, circle2, circle3, circle4, circle5, goal, square = create_agents_goal_and_payload()
-
         barrier = Barrier(position=(0, 0, -0.01), scale=(4, 0.5, 0.2), direction=1)
         barriers.append(barrier)
 
+        circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload()
+
     elif map_id == 2:
         # Map 2: Two vertical barriers moving in opposite directions
-        circle, circle1, circle2, circle3, circle4, circle5, goal, square = create_agents_goal_and_payload()
-
         barrier1 = Barrier(position=(0, 4, -0.01), scale=(0.5, 4, 0.5), direction=1)
         barrier2 = Barrier(position=(0, -4, -0.01), scale=(0.5, 4, 0.5), direction=-1)
 
         barriers.append(barrier1)
         barriers.append(barrier2)
 
+        circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload()
+
     elif map_id == 3:
         # Map 3: Two horizontal barriers, one higher than the other, moving in opposite directions
-        circle, circle1, circle2, circle3, circle4, circle5, goal, square = create_agents_goal_and_payload()
-
         barrier1 = Barrier(position=(-2, 1, -0.01), scale=(4, 0.5, 0.5), direction=1)
         barrier2 = Barrier(position=(2, -2, -0.01), scale=(4, 0.5, 0.5), direction=-1)
 
         barriers.append(barrier1)
         barriers.append(barrier2)
 
+        circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload()
+
     elif map_id == 4:
-        # Map 4: Barriers appear as agents doing a random walk
-        circle, circle1, circle2, circle3, circle4, circle5, goal, square = create_agents_goal_and_payload()
-        
+        # Map 4: Barriers appear as agents doing a random walk        
         # Initialize 10 barrier agents with random positions
         for i in range(10):
             # Generate random positions within a specific range
@@ -750,12 +748,19 @@ def create_map(map_id):
             
             agent = Barrier_Agent(position=position, scale=1)
             barrier_agents.append(agent)
+
+        circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload()
     
     agents.append(circle)
     agents.append(circle1)
     agents.append(circle2)
     agents.append(circle3)
     agents.append(circle4)
+    agents.append(circle5)
+    agents.append(circle6)
+    agents.append(circle7)
+    agents.append(circle8)
+    agents.append(circle9)
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
@@ -1029,7 +1034,7 @@ def not_ideal_get_closest_entities(agent, full=False):
     origin.z = -0.1
     finds = []
     closest_colors = []
-    search_list = [goal, circle, circle1, circle2, circle3, circle4]
+    search_list = [goal, circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9]
     search_list.remove(agent)
 
     for other_entity in search_list:
@@ -1172,7 +1177,7 @@ def move_barriers():
         old_position = barrier.position
         slide_barrier(barrier, barrier_speed)
         
-        for entity in [circle, circle1, circle2, circle3, circle4, square]:
+        for entity in [circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, square]:
             if entity.intersects(barrier).hit and check_entity_at_barrier_level(entity, barrier):
                 old_distance = get_distance_between_two_3D_points(old_position, entity.position)
                 curr_distance = get_distance_between_two_3D_points(barrier.position, entity.position)
@@ -1210,7 +1215,6 @@ def failure_condition():
 
 # Update function called every frame
 def update():
-    # print("Barrier:", barrier.scale)
     # Check if the square (payload) has reached the goal
     elapsed_time = time.time() - start_time
 
@@ -1221,17 +1225,11 @@ def update():
     if elapsed_time > time_limit:
             failure_condition()
 
-
     if square.intersects(goal).hit:
         print("Success! Payload reached goal at time: ", elapsed_time)
         application.quit()
 
-        
-    
-    agent_targets = {}
-
-
-    for index, agent in enumerate([circle, circle1, circle2, circle3, circle4]):
+    for index, agent in enumerate([circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9]):
         potential_new_state = None
          # If the agent is in random walk mode, make it do random walk
         # if random_walk_states[index]:
