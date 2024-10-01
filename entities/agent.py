@@ -10,6 +10,9 @@ class Agent(Entity):
             collider='sphere'
         )
         self.previous_position = self.position  # Initialize previous_position
+        self.saw_goal_previous = False
+        self.state = None
+        self.state_time = 0
 
     def update(self):
         self.update_position()  # Update previous position before any movement

@@ -1,10 +1,10 @@
 from ursina import Entity, color
 
 class Goal(Entity):
-    def __init__(self, position):
+    def __init__(self, position, scale):
         super().__init__(
             model='cube',
-            scale=(2, 2),
+            scale=scale,
             color=color.green,
             position=position,
             collider='box'
