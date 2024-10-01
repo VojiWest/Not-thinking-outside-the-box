@@ -1,9 +1,1 @@
-barrier = Barrier(position=(-2, -2, -0.01), direction=1) 
-# goal = Goal(position=(-3, -3.5, -0.01))
-# square = Payload(position=(2, 3, -0.01), scale=(1.2, 1.2))
-# circle = Agent(position=(-1, 3, -0.01), scale=0.2)
-# circle1 = Agent(position=(-3, 3.75, -0.01), scale=0.19)
-# circle2 = Agent(position=(-2, 4.25, -0.01), scale=0.18)
-# circle3 = Agent(position=(3, 4.5, -0.01), scale=0.21)
-# circle4 = Agent(position=(1, 4, -0.01), scale=0.22)
-# circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
+Agent hit

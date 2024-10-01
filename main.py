@@ -26,6 +26,11 @@ current_map = 0
 
 random_walk_directions = {}
 
+start_time = time.time()
+time_limit = 60  # 60 seconds
+
+success = False
+
 """ CREATE ENTITIES """ # I should probably do this in a better way, but for now this is what I have
 
 
@@ -248,7 +253,7 @@ def avoid_overlaps(agents, box, barriers):
         # Check for collision with barriers
         for barrier in barriers:
             if agent.intersects(barrier).hit:  # If agent overlaps with a barrier
-                print("Agent hit")
+                # print("Agent hit")
                 # Calculate the distance between the agent and the barrier
                 direction = Vec3(agent.x - barrier.x, agent.y - barrier.y, 0).normalized()
                 # Push agent away from the box
@@ -258,7 +263,7 @@ def avoid_overlaps(agents, box, barriers):
 
         for barrier_agent in barrier_agents:
             if agent.intersects(barrier_agent).hit:  # If agent overlaps with a barrier
-                print("Agent hit")
+                # print("Agent hit")
                 # Calculate the distance between the agent and the barrier
                 direction = Vec3(agent.x - barrier_agent.x, agent.y - barrier_agent.y, 0).normalized()
                 # Push agent away from the barrier_agent
@@ -269,6 +274,9 @@ def avoid_overlaps(agents, box, barriers):
                 direction = Vec3(box.x - barrier_agent.x, box.y - barrier_agent.y, 0).normalized()
                 # Push the barrier away from the box
                 box.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
+
+
+            ### This makes the barrier_agents push the goal around - dynamic goal extension perhance? ###
 
             # if goal.intersects(barrier_agent).hit:
             #     # Calculate the direction to push them away from each other
@@ -547,14 +555,32 @@ def at_payload(agent, distance_threshold = 0.05):
         return True
     return False
 
+def failure_condition():
+    print("Time's up! Thats a fail.")
+    application.quit()
+
 # Update function called every frame
 def update():
     # print("Barrier:", barrier.scale)
     # Check if the square (payload) has reached the goal
+    elapsed_time = time.time() - start_time
+
+    # Display the timer on screen (optional)
+    print(f"Elapsed Time: {elapsed_time:.2f} seconds")
+
+    # Check if the timer exceeds 60 seconds
+    if elapsed_time > time_limit:
+            failure_condition()
+
+
     if square.intersects(goal).hit:
-        print("Success")
+        print("Success! Payload reached goal at time: ", elapsed_time)
+        application.quit()
+
+        
     
     agent_targets = {}
+
 
     for index, agent in enumerate([circle, circle1, circle2, circle3, circle4]):
         potential_new_state = None
@@ -617,7 +643,7 @@ def update():
             potential_new_state = "Sub-goal"
 
         if potential_new_state != agent.state:
-            print(f"Agent {index} transitioning from {agent.state} to {potential_new_state} -- {agent.state_time}")
+            # print(f"Agent {index} transitioning from {agent.state} to {potential_new_state} -- {agent.state_time}")
             agent.state = potential_new_state
             agent.state_time = 0
         else:
