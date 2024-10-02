@@ -14,6 +14,7 @@ class Agent(Entity):
         self.state = None
         self.state_time = 0
         self.last_goal_payload_angle = None
+        self.time_since_last_seen_payload = 1000
 
     def update(self):
         self.update_position()  # Update previous position before any movement

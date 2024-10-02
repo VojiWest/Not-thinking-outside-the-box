@@ -73,6 +73,9 @@ def create_agents_goal_and_payload(barriers, map_id):
     if map_id == 3:
         goal = Goal(position=(3, -3.5, -0.01), scale=(1,1))
         square = Payload(position=(-2, 3, -0.01), scale=(1, 1))
+    elif map_id == 1:
+        goal = Goal(position=(-3, -3.5, -0.01), scale=(1,1))
+        square = Payload(position=(0, 3, -0.01), scale=(1, 1))
     else:
         goal = Goal(position=(-3, -3.5, -0.01), scale=(1,1))
         square = Payload(position=(2, 3, -0.01), scale=(1, 1))

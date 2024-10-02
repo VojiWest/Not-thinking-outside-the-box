@@ -27,7 +27,7 @@ camera.orthographic = True
 camera.fov = 10  # Field of view to adjust the zoom level
 
 # Define movement speed of agents
-move_speed = 1
+move_speed = 0.5
 current_map = 0
 
 # Set up timer
@@ -220,7 +220,6 @@ def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
                 to_ignore = [agent]
                 ray = raycast(origin, direction_goal, distance=50, ignore=to_ignore, debug=False)
 
-
                 # Check if the raycast hit an entity
                 found_entity = ray.entity
                 if found_entity:  # Ensure found_entity is not None
@@ -242,9 +241,9 @@ def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
         
     if entity_check == "goal":
         if (0,1,0,1) in closest_colors:
-            return "goal", closest_colors
+            return "goal"
         else:
-            return None, None
+            return None
         
     if entity_check == "payload":
         if (0,0,1,1) in closest_colors:
@@ -372,26 +371,38 @@ def move_barriers():
                     break  # Stop further checks once one barrier interaction occurs
 
 
-def check_if_agent_turn_goal(agent, distance_threshold = 1):
-    closest_entity, others = not_ideal_get_closest_entities(agent)
+def check_if_agent_turn_goal(agent):
+    closest_entity = not_ideal_get_closest_entities(agent)
+
+    closest_entity_payload = not_ideal_get_closest_entities(agent, entity_check="payload")
+    if closest_entity_payload == "payload":
+        agent.time_since_last_seen_payload = 0
+    else:
+        agent.time_since_last_seen_payload += 1
+
+    # if agent.time_since_last_seen_payload > 30:
     angle_condition = False
+    if agent.last_goal_payload_angle is not None:
+        print(agent.last_goal_payload_angle)
     if agent.last_goal_payload_angle is None or agent.last_goal_payload_angle > 90:
         angle_condition = True
     if agent.saw_goal_previous == True and angle_condition and closest_entity != "goal":
-        print("Closest entity: ", closest_entity, "Others: ", others)
-        print("Agent turned into a sub-goal")
         agent.color = color.green
 
-def check_if_goal_turn_agent(agent, distance_threshold = 2):
+def check_if_goal_turn_agent(agent, distance_threshold = 5):
     closest_entity = not_ideal_get_closest_entities(agent)
+    closest_entity_payload = not_ideal_get_closest_entities(agent, entity_check="payload")
+    if closest_entity_payload == "payload":
+        agent.time_since_last_seen_payload = 0
+    else:
+        agent.time_since_last_seen_payload += 1
+
     if closest_entity == "goal": # Agent sees a goal
         agent.color = hsv(190, 0.9, 1) # Light blue
-        print("Turned back into an agent since goal is visible")
-    elif get_distance_between_two_3D_points(square.position, agent.position) < distance_threshold and not_ideal_get_closest_entities(agent, entity_check="payload") == "payload":
+    elif get_distance_between_two_3D_points(square.position, agent.position) < distance_threshold and agent.time_since_last_seen_payload < 200:
         agent.color = hsv(190, 0.9, 1) # Light blue
-        print("Turned back into an agent since it's close to the payload")
-
-    ### Still have to implement timeout
+    elif agent.state_time > 600:
+        agent.color = hsv(190, 0.9, 1) # Light blue
 
 def at_payload(agent, distance_threshold = 0.05):
     if get_distance_between_two_3D_points(agent.position, square.position) < distance_threshold:
@@ -414,11 +425,11 @@ def update():
             # continue  # Skip the rest of the loop if the agent is in random walk mode
 
         # McRae stuff
-        if not reach_payload(agent, square):
-            if agent.color != color.green:
-                check_if_agent_turn_goal(agent)
-            else:
-                check_if_goal_turn_agent(agent)
+        # if not reach_payload(agent, square):
+        if agent.color != color.green:
+            check_if_agent_turn_goal(agent)
+        else:
+            check_if_goal_turn_agent(agent)
 
         # Check if the agent is not a sub-goal
         if agent.color != color.green:
@@ -427,8 +438,10 @@ def update():
             if found_entity == "goal":
                 agent.saw_goal_previous = True
                 if not_ideal_get_closest_entities(agent, entity_check="payload") == "payload":
-                    print("Updating Angle")
-                    agent.last_goal_payload_angle = get_angle_between_two_points(agent.position, square.position, found_entity_position)                
+                    agent.last_goal_payload_angle = get_angle_between_two_points(agent.position, square.position, found_entity_position) 
+            else:
+                agent.saw_goal_previous = False
+                agent.last_goal_payload_angle = None               
 
             potential_new_state = "Search"
             can_see_payload = not_ideal_get_closest_entities(agent, entity_check="payload")
@@ -449,7 +462,7 @@ def update():
                     #     continue  # Skip the rest of the loop for this agent
 
                     found_entity = not_ideal_get_closest_entities(agent)
-                    if found_entity != "goal" and at_payload(agent, distance_threshold=0.9) and agent.state_time < 600: # Goal is occluded
+                    if found_entity != "goal" and at_payload(agent, distance_threshold=9) and agent.state_time < 600: # Goal is occluded
                         potential_new_state = "Push"
                         movement = move_agent_to_payload(agent, square, barriers)
                         agent.saw_goal_previous = False
