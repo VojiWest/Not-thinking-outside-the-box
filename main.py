@@ -27,12 +27,12 @@ camera.orthographic = True
 camera.fov = 10  # Field of view to adjust the zoom level
 
 # Define movement speed of agents
-move_speed = 0.75
+move_speed = 1.5
 current_map = 0
 
 # Set up timer
 start_time = time.time()
-time_limit = 60
+time_limit = 600
 
 random_walk_directions = {}
 
@@ -48,7 +48,8 @@ barrier_agents = []
 
 # Function to create maps and entities
 def create_map(map_id):
-    global circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square, barrier
+    global circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, circle10, circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19
+    global goal, square, barrier
 
     # Clear existing entities (if needed)
     for entity in scene.entities:
@@ -60,14 +61,14 @@ def create_map(map_id):
         barrier = Barrier(position=(-2, -2, -0.01), direction=1)
         barriers.append(barrier)
 
-        circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload(barriers, map_id)
+        agent_list, goal, square = create_agents_goal_and_payload(barriers, map_id)
 
     elif map_id == 1:
         # Map 1: One barrier in the middle moving side to side
         barrier = Barrier(position=(0, 0, -0.01), scale=(4, 0.5, 0.2), direction=1)
         barriers.append(barrier)
 
-        circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload(barriers, map_id)
+        agent_list, goal, square = create_agents_goal_and_payload(barriers, map_id)
 
     elif map_id == 2:
         # Map 2: Two vertical barriers moving in opposite directions
@@ -77,7 +78,7 @@ def create_map(map_id):
         barriers.append(barrier1)
         barriers.append(barrier2)
 
-        circle, circle1, circle2, circle3, circle4, circle5,circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload(barriers, map_id)
+        agent_list, goal, square = create_agents_goal_and_payload(barriers, map_id)
 
     elif map_id == 3:
         # Map 3: Two horizontal barriers, one higher than the other, moving in opposite directions
@@ -87,7 +88,7 @@ def create_map(map_id):
         barriers.append(barrier1)
         barriers.append(barrier2)
 
-        circle, circle1, circle2, circle3, circle4, circle5,circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload(barriers, map_id)
+        agent_list, goal, square = create_agents_goal_and_payload(barriers, map_id)
 
     elif map_id == 4:
         # Map 4: Barriers appear as agents doing a random walk        
@@ -102,9 +103,29 @@ def create_map(map_id):
             agent = Barrier_Agent(position=position, scale=1)
             barrier_agents.append(agent)
 
-        circle, circle1, circle2, circle3, circle4, circle5,circle6, circle7, circle8, circle9, goal, square = create_agents_goal_and_payload(barriers, map_id)
+        agent_list, goal, square = create_agents_goal_and_payload(barriers, map_id)
 
-    
+    circle = agent_list[0]
+    circle1 = agent_list[1]
+    circle2 = agent_list[2]
+    circle3 = agent_list[3]
+    circle4 = agent_list[4]
+    circle5 = agent_list[5]
+    circle6 = agent_list[6]
+    circle7 = agent_list[7]
+    circle8 = agent_list[8]
+    circle9 = agent_list[9]
+    circle10 = agent_list[10]
+    circle11 = agent_list[11]
+    circle12 = agent_list[12]
+    circle13 = agent_list[13]
+    circle14 = agent_list[14]
+    circle15 = agent_list[15]
+    circle16 = agent_list[16]
+    circle17 = agent_list[17]
+    circle18 = agent_list[18]
+    circle19 = agent_list[19]
+
     agents.append(circle)
     agents.append(circle1)
     agents.append(circle2)
@@ -115,6 +136,16 @@ def create_map(map_id):
     agents.append(circle7)
     agents.append(circle8)
     agents.append(circle9)
+    agents.append(circle10)
+    agents.append(circle11)
+    agents.append(circle12)
+    agents.append(circle13)
+    agents.append(circle14)
+    agents.append(circle15)
+    agents.append(circle16)
+    agents.append(circle17)
+    agents.append(circle18)
+    agents.append(circle19)
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
@@ -169,16 +200,17 @@ def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
     origin.z = -0.1
     positions = []
     closest_colors = []
-    search_list = [goal, circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, square]
+    search_list = [goal, circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, circle10, 
+                   circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19, square]
     search_list.remove(agent)
 
     for other_entity in search_list:
         if other_entity.color == (0,1,0,1) or other_entity.color == (0,0,1,1):
-            buffer_value = 0.1
+            buffer_value = 0.05
             top_right = (other_entity.x + other_entity.scale_x/2 - buffer_value, other_entity.y + other_entity.scale_y/2 - buffer_value)
             top_left = (other_entity.x - other_entity.scale_x/2 + buffer_value, other_entity.y + other_entity.scale_y/2 - buffer_value)
-            bottom_right = (other_entity.x + other_entity.scale_x/2 - buffer_value, other_entity.y - other_entity.scale_y/2+ buffer_value)
-            bottom_left = (other_entity.x - other_entity.scale_x/2+ buffer_value, other_entity.y - other_entity.scale_y/2+ buffer_value)
+            bottom_right = (other_entity.x + other_entity.scale_x/2 - buffer_value, other_entity.y - other_entity.scale_y/2 + buffer_value)
+            bottom_left = (other_entity.x - other_entity.scale_x/2 + buffer_value, other_entity.y - other_entity.scale_y/2 + buffer_value)
             corners = [top_right, top_left, bottom_right, bottom_left]
             for corner in corners:
                 # direction_goal = Vec3(other_entity.x - agent.x, other_entity.y - agent.y, 0).normalized()
@@ -208,9 +240,9 @@ def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
         
     if entity_check == "goal":
         if (0,1,0,1) in closest_colors:
-            return "goal"
+            return "goal", closest_colors
         else:
-            return None
+            return None, None
         
     if entity_check == "payload":
         if (0,0,1,1) in closest_colors:
@@ -289,7 +321,7 @@ random_walk_states = {0: False, 1: False, 2: False, 3: False, 4: False}  # Track
 # Global variable to store the current random direction for each agent
 random_walk_directions = {}
 
-def random_walk(agent, agent_id, move_speed=0.5, change_direction_interval=1.0):
+def random_walk(agent, agent_id, move_speed=1.5, change_direction_interval=2.0):
     """
     Move the agent in a random direction, and periodically change the direction.
     
@@ -317,6 +349,7 @@ def random_walk(agent, agent_id, move_speed=0.5, change_direction_interval=1.0):
     avoid_overlaps([agent], square, barriers, barrier_agents)
     keep_in_bounds(barrier_agents, square, platform)
 
+
 def move_barriers():
     # Slide barrier side to side
     barrier_speed = 0.5
@@ -324,7 +357,8 @@ def move_barriers():
         old_position = barrier.position
         slide_barrier(barrier, barrier_speed)
         
-        for entity in [circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, square]:
+        for entity in [circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, circle10, 
+                   circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19, square]:
             if entity.intersects(barrier).hit and check_entity_at_barrier_level(entity, barrier):
                 old_distance = get_distance_between_two_3D_points(old_position, entity.position)
                 curr_distance = get_distance_between_two_3D_points(barrier.position, entity.position)
@@ -335,15 +369,16 @@ def move_barriers():
                     slide_barrier(barrier, barrier_speed, reverse=True)
                     break  # Stop further checks once one barrier interaction occurs
 
+
 def check_if_agent_turn_goal(agent, distance_threshold = 1):
-    closest_entity = not_ideal_get_closest_entities(agent)
+    closest_entity, others = not_ideal_get_closest_entities(agent)
     angle_condition = False
     if agent.last_goal_payload_angle is None or agent.last_goal_payload_angle > 90:
         angle_condition = True
     if agent.saw_goal_previous == True and angle_condition and closest_entity != "goal":
+        print("Closest entity: ", closest_entity, "Others: ", others)
         print("Agent turned into a sub-goal")
         agent.color = color.green
-
 
 def check_if_goal_turn_agent(agent, distance_threshold = 2):
     closest_entity = not_ideal_get_closest_entities(agent)
@@ -368,7 +403,8 @@ def update():
     
     agent_targets = {}
 
-    for index, agent in enumerate([circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9]):
+    for index, agent in enumerate([circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, circle10, 
+                   circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19]):
         potential_new_state = None
          # If the agent is in random walk mode, make it do random walk
         # if random_walk_states[index]:
@@ -388,11 +424,13 @@ def update():
             found_entity, found_entity_position = not_ideal_get_closest_entities(agent, full=True)
             if found_entity == "goal":
                 agent.saw_goal_previous = True
-                agent.last_goal_payload_angle = get_angle_between_two_points(agent.position, square.position, found_entity_position)                
+                if not_ideal_get_closest_entities(agent, entity_check="payload") == "payload":
+                    print("Updating Angle")
+                    agent.last_goal_payload_angle = get_angle_between_two_points(agent.position, square.position, found_entity_position)                
 
             potential_new_state = "Search"
             can_see_payload = not_ideal_get_closest_entities(agent, entity_check="payload")
-            if can_see_payload == "payload": # Check if the agent can see the payload
+            if can_see_payload == "payload" and (agent.saw_goal_previous == True or agent.state == "Approach" or agent.state == "Reposition"): # Check if the agent can see the payload
                 agent.color = hsv(190, 0.9, 1) # Light blue
 
                 random_walk_states[index] = False
@@ -414,16 +452,13 @@ def update():
                         movement = move_agent_to_payload(agent, square, barriers)
                         agent.saw_goal_previous = False
                     else:
-                        potential_new_state = "Repoisition"
+                        potential_new_state = "Reposition"
                         # If agent hasn't reached the payload, reset its timer
                         # reach_timers[index] = 0
 
                         # move around the the payload (code below is a placeholder) - still working on this
                         reposition(agent, square)
-                        agent.color = hsv(56, 1, 1)
-
-                    if found_entity == "goal":
-                        agent.saw_goal_previous = True
+                        agent.color = hsv(56, 1, 1) # Yellow
                         
                 else:  
                     # If agent can't see the payload, reset its timer

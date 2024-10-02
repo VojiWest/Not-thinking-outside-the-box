@@ -115,10 +115,7 @@ def keep_in_bounds(agents, square, platform):
     elif left_square < left_platform:
         square.x = left_platform + square.scale_x / 2
 
-def check_direction_of_barrier(barrier, agent):
-    # Check if the barrier is above/below or to the left/right of the agent
-    # Return the direction of the barrier relative to the agent
-
+def move_agent_to_barrier_edge(barrier, agent):
     # Get the bounds of the barrier and the agent
     top_barrier = barrier.y + barrier.scale_y / 2
     bottom_barrier = barrier.y - barrier.scale_y / 2
@@ -130,18 +127,35 @@ def check_direction_of_barrier(barrier, agent):
     right_agent = agent.x + agent.scale_x / 2
     left_agent = agent.x - agent.scale_x / 2
 
-    # Check if the agent is on the bottom of the barrier
-    if abs(top_agent - bottom_barrier) < 0.02 and right_agent > left_barrier and left_agent < right_barrier:
-        return "bottom"
-    # Check if the agent is on the top of the barrier
-    elif abs(bottom_agent - top_barrier) < 0.02 and right_agent > left_barrier and left_agent < right_barrier:
-        return "top"
-    # Check if the agent is on the right of the barrier
-    elif abs(left_agent - right_barrier) > 0.02 and top_agent > bottom_barrier and bottom_agent < top_barrier:
-        return "right"
-    # Check if the agent is on the left of the barrier
-    elif abs(right_agent - left_barrier) < 0.02 and top_agent > bottom_barrier and bottom_agent < top_barrier:
-        return "left"
+    # Check if the agent intersects with the barrier
+    if not (right_agent < left_barrier or left_agent > right_barrier or
+            top_agent < bottom_barrier or bottom_agent > top_barrier):
+
+        # Calculate distances to the nearest edge of the barrier
+        dist_to_top = abs(top_barrier - bottom_agent)
+        dist_to_bottom = abs(bottom_barrier - top_agent)
+        dist_to_left = abs(left_barrier - right_agent)
+        dist_to_right = abs(right_barrier - left_agent)
+
+        # Find the nearest edge by comparing distances
+        nearest_edge = min(dist_to_top, dist_to_bottom, dist_to_left, dist_to_right)
+
+        # Move the agent to the nearest edge
+        if nearest_edge == dist_to_top:
+            # Move the agent just below the top of the barrier
+            agent.y = top_barrier + agent.scale_y / 2
+        elif nearest_edge == dist_to_bottom:
+            # Move the agent just above the bottom of the barrier
+            agent.y = bottom_barrier - agent.scale_y / 2
+        elif nearest_edge == dist_to_left:
+            # Move the agent just to the right of the left side of the barrier
+            agent.x = left_barrier - agent.scale_x / 2
+        elif nearest_edge == dist_to_right:
+            # Move the agent just to the left of the right side of the barrier
+            agent.x = right_barrier + agent.scale_x / 2
+
+        return True  # The agent was moved
+    return False  # No intersection, so no movement needed
     
 
 def avoid_overlaps(agents, box, barriers, barrier_agents):
@@ -166,21 +180,8 @@ def avoid_overlaps(agents, box, barriers, barrier_agents):
         # Check for collision with barriers
         for barrier in barriers:
             if agent.intersects(barrier).hit:  # If agent overlaps with a barrier
-                # print("Agent hit")
                 # Calculate the distance between the agent and the barrier
-                relative_direction = check_direction_of_barrier(barrier, agent)
-                if relative_direction == "bottom":
-                    # set the agent's y position to the bottom of the barrier
-                    agent.y = barrier.y - barrier.scale_y / 2 - agent.scale_y / 2
-                elif relative_direction == "top":
-                    # set the agent's y position to the top of the barrier
-                    agent.y = barrier.y + barrier.scale_y / 2 + agent.scale_y / 2
-                elif relative_direction == "right":
-                    # set the agent's x position to the right of the barrier
-                    agent.x = barrier.x + barrier.scale_x / 2 + agent.scale_x / 2
-                elif relative_direction == "left":
-                    # set the agent's x position to the left of the barrier
-                    agent.x = barrier.x - barrier.scale_x / 2 - agent.scale_x / 2
+                move_agent_to_barrier_edge(barrier, agent)
 
         for barrier_agent in barrier_agents:
             if agent.intersects(barrier_agent).hit:  # If agent overlaps with a barrier

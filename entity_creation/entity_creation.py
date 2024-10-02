@@ -52,7 +52,7 @@ def create_positions(barriers, goal, square, grid_size=10, grid_resolution=0.5):
         add_to_grid(obstacle)
 
     # Randomly generate positions for agents
-    for p in range(11):
+    for p in range(21):
         print("Finding position for agent", p)
         works = False
         while not works:
@@ -68,6 +68,7 @@ def create_positions(barriers, goal, square, grid_size=10, grid_resolution=0.5):
 
 
 def create_agents_goal_and_payload(barriers, map_id):
+    agent_size = 0.15
 
     if map_id == 3:
         goal = Goal(position=(3, -3.5, -0.01), scale=(1,1))
@@ -78,16 +79,26 @@ def create_agents_goal_and_payload(barriers, map_id):
 
     agent_positions = create_positions(barriers, goal, square)
 
-    circle = Agent(position=agent_positions[0], scale=0.2)
-    circle1 = Agent(position=agent_positions[1], scale=0.2)
-    circle2 = Agent(position=agent_positions[2], scale=0.2)
-    circle3 = Agent(position=agent_positions[3], scale=0.2)
-    circle4 = Agent(position=agent_positions[4], scale=0.2)
-    circle5 = Agent(position=agent_positions[5], scale=0.2)
-    circle6 = Agent(position=agent_positions[6], scale=0.2)
-    circle7 = Agent(position=agent_positions[7], scale=0.2)
-    circle8 = Agent(position=agent_positions[8], scale=0.2)
-    circle9 = Agent(position=agent_positions[9], scale=0.2)
+    circle = Agent(position=agent_positions[0], scale=agent_size)
+    circle1 = Agent(position=agent_positions[1], scale=agent_size)
+    circle2 = Agent(position=agent_positions[2], scale=agent_size)
+    circle3 = Agent(position=agent_positions[3], scale=agent_size)
+    circle4 = Agent(position=agent_positions[4], scale=agent_size)
+    circle5 = Agent(position=agent_positions[5], scale=agent_size)
+    circle6 = Agent(position=agent_positions[6], scale=agent_size)
+    circle7 = Agent(position=agent_positions[7], scale=agent_size)
+    circle8 = Agent(position=agent_positions[8], scale=agent_size)
+    circle9 = Agent(position=agent_positions[9], scale=agent_size)
+    circle10 = Agent(position=agent_positions[10], scale=agent_size)
+    circle11 = Agent(position=agent_positions[11], scale=agent_size)
+    circle12 = Agent(position=agent_positions[12], scale=agent_size)
+    circle13 = Agent(position=agent_positions[13], scale=agent_size)
+    circle14 = Agent(position=agent_positions[14], scale=agent_size)
+    circle15 = Agent(position=agent_positions[15], scale=agent_size)
+    circle16 = Agent(position=agent_positions[16], scale=agent_size)
+    circle17 = Agent(position=agent_positions[17], scale=agent_size)
+    circle18 = Agent(position=agent_positions[18], scale=agent_size)
+    circle19 = Agent(position=agent_positions[19], scale=agent_size)
 
     # circle = Agent(position=(-1, 3, -0.01), scale=0.2)
     # circle1 = Agent(position=(-3, 3.75, -0.01), scale=0.2)
@@ -96,4 +107,7 @@ def create_agents_goal_and_payload(barriers, map_id):
     # circle4 = Agent(position=(1, 4, -0.01), scale=0.2)
     # circle5 = Agent(position=(1, -3.5, -0.01), scale=0.2)
 
-    return circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, goal, square
+    circles = [circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, 
+               circle9, circle10, circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19]
+
+    return circles, goal, square
