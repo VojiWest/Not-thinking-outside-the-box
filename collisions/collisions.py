@@ -115,6 +115,35 @@ def keep_in_bounds(agents, square, platform):
     elif left_square < left_platform:
         square.x = left_platform + square.scale_x / 2
 
+def check_direction_of_barrier(barrier, agent):
+    # Check if the barrier is above/below or to the left/right of the agent
+    # Return the direction of the barrier relative to the agent
+
+    # Get the bounds of the barrier and the agent
+    top_barrier = barrier.y + barrier.scale_y / 2
+    bottom_barrier = barrier.y - barrier.scale_y / 2
+    right_barrier = barrier.x + barrier.scale_x / 2
+    left_barrier = barrier.x - barrier.scale_x / 2
+
+    top_agent = agent.y + agent.scale_y / 2
+    bottom_agent = agent.y - agent.scale_y / 2
+    right_agent = agent.x + agent.scale_x / 2
+    left_agent = agent.x - agent.scale_x / 2
+
+    # Check if the agent is on the bottom of the barrier
+    if abs(top_agent - bottom_barrier) < 0.02 and right_agent > left_barrier and left_agent < right_barrier:
+        return "bottom"
+    # Check if the agent is on the top of the barrier
+    elif abs(bottom_agent - top_barrier) < 0.02 and right_agent > left_barrier and left_agent < right_barrier:
+        return "top"
+    # Check if the agent is on the right of the barrier
+    elif abs(left_agent - right_barrier) > 0.02 and top_agent > bottom_barrier and bottom_agent < top_barrier:
+        return "right"
+    # Check if the agent is on the left of the barrier
+    elif abs(right_agent - left_barrier) < 0.02 and top_agent > bottom_barrier and bottom_agent < top_barrier:
+        return "left"
+    
+
 def avoid_overlaps(agents, box, barriers, barrier_agents):
     ### This function prevents agents, payloads, and barriers from overlapping each other ###
 
@@ -139,11 +168,19 @@ def avoid_overlaps(agents, box, barriers, barrier_agents):
             if agent.intersects(barrier).hit:  # If agent overlaps with a barrier
                 # print("Agent hit")
                 # Calculate the distance between the agent and the barrier
-                direction = Vec3(agent.x - barrier.x, agent.y - barrier.y, 0).normalized()
-                # Push agent away from the box
-                agent.position += direction * time.dt * 0.5  # Adjust the 0.5 to control push strength
-
-                # TO DO: take into account how the direction of the barrier affects how the collision is being handled 
+                relative_direction = check_direction_of_barrier(barrier, agent)
+                if relative_direction == "bottom":
+                    # set the agent's y position to the bottom of the barrier
+                    agent.y = barrier.y - barrier.scale_y / 2 - agent.scale_y / 2
+                elif relative_direction == "top":
+                    # set the agent's y position to the top of the barrier
+                    agent.y = barrier.y + barrier.scale_y / 2 + agent.scale_y / 2
+                elif relative_direction == "right":
+                    # set the agent's x position to the right of the barrier
+                    agent.x = barrier.x + barrier.scale_x / 2 + agent.scale_x / 2
+                elif relative_direction == "left":
+                    # set the agent's x position to the left of the barrier
+                    agent.x = barrier.x - barrier.scale_x / 2 - agent.scale_x / 2
 
         for barrier_agent in barrier_agents:
             if agent.intersects(barrier_agent).hit:  # If agent overlaps with a barrier
