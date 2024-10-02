@@ -148,8 +148,8 @@ def create_map(map_id):
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
-create_map(0)
-moving_barriers = False
+create_map(4)
+moving_barriers = True
 
 
 ############################################################################################
@@ -181,17 +181,59 @@ def move_agent_to_payload(agent, square, barriers):
         # Move the payload
         square.position += max_square_direction * time.dt * move_speed
 
+        # Calculate the position difference between agent and square
+        relative_position = Vec3(agent.x - square.x, agent.y - square.y, 0)
+
+        # Calculate rotation based on push direction (closer to edges generates more rotation)
+        push_distance = relative_position.length()
+        max_rotation_angle = 5  # Maximum rotation angle in radians (adjust this as needed)
+        rotation_angle = max_rotation_angle * (relative_position.normalized().dot(max_square_direction)) / push_distance
+
+        # Apply rotation to the square
+        square.rotation_z += rotation_angle  # Rotate the square based on where the agent is pushing
+
         # Check for intersections with all barriers
         for barrier in barriers:
             if square.intersects(barrier).hit:  # If the payload intersects with a barrier after moving, move it back
-                square.position -= max_square_direction * time.dt * move_speed
+                keep_not_overlapping(square, barrier)
                 break  # Stop checking further barriers once one collision is found
+
+        for barrier in barriers:
+            if square.intersects(barrier).hit:
+                print("Payload is stuck in a barrier")
 
         # Check for collision again to prevent overlapping
         if agent.intersects(square).hit:  # If the agent intersects with the payload after moving, move it back
             agent.position -= movement
 
         return movement
+    
+def move_agent_around_payload(agent, square, barriers, angle_deviation=20):
+    """
+    Move the agents towards the payload but go around it such that they don't approach it directly.
+
+    Args:
+        agent (Entity): the agent
+        square (Entity): the payload
+        barriers (Entity): list of barrier entities
+    """
+
+    # Calculate the direction to the center of the payload payload
+    square_direction = Vec3(square.x - agent.x, square.y - agent.y, 0)
+
+    # Calculate the direction to 20 degrees to the left of the payload
+    left_direction = square_direction + Vec3(math.cos(math.radians(angle_deviation)), math.sin(math.radians(angle_deviation)), 0)
+
+    # Calculate the direction to 20 degrees to the right of the payload
+    right_direction = square_direction + Vec3(math.cos(math.radians(-angle_deviation)), math.sin(math.radians(-angle_deviation)), 0)
+
+    # select a random direction to move towards
+    direction = random.choice([left_direction, right_direction])
+
+    # Move the agent in the selected direction
+    agent.position += direction.normalized() * time.dt * move_speed
+
+
 
 def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
     # Cast ray in direction of goal not in direction of agent facing
@@ -272,58 +314,19 @@ def move_in_barrier_direction(agent):
             agent.position += direction * time.dt * 0.5  # Push agent away
             # barrier.position -= direction * time.dt * 0.5    # Push box away
 
-# def reposition(agent, obj):
-#     speed = 0.01
-#     # Assume we have some functions that give us the agent's direction to object and goal
-#     object_direction = get_direction_to(agent, obj)  # Direction from agent to object
-#     goal_direction = get_direction_to(agent, goal)      # Direction from agent to goal
-    
-#     # Calculate difference between the object's direction and goal's direction
-#     diff = object_direction - goal_direction
-#     diff = (diff + 2 * math.pi) % (2 * math.pi)  # Normalize angle difference to [0, 2*pi)
-    
-#     # Determine whether to move clockwise or counterclockwise
-#     clockwise = diff >= math.pi
-    
-#     # Parameters for movement vector
-#     min_dist = 0.1  # Minimum distance from object
-#     max_dist = 0.25  # Maximum distance from object
-    
-#     # Get the current distance of the agent from the object
-#     object_distance = get_distance(agent, obj)
-    
-#     # Force field around the object (we move perpendicular to the object vector)
-#     object_vec = np.array([math.cos(object_direction), math.sin(object_direction)])  # Convert object direction to a vector
-#     move_vec = np.array([-object_vec[1], object_vec[0]])  # Perpendicular vector for moving around
-    
-#     if clockwise:
-#         move_vec *= -1  # Reverse direction if moving clockwise
-    
-#     # Keep distance from object
-#     if object_distance > 0.9:
-#         move_vec += object_vec  # Move towards the object if too far away
-
-#     # Apply movement to the agent
-#     # Normalize the movement vector if it's not already
-#     move_vec = move_vec / np.linalg.norm(move_vec)
-    
-#     # Apply movement vector scaled by speed
-#     agent.x += move_vec[0] * speed
-#     agent.y += move_vec[1] * speed
-
 def detect_color_in_front(agent, direction):
     # Cast a ray in the direction the agent is facing (self.forward)
     hit_info = raycast(agent.position, direction, distance=10)
 
     if hit_info.hit:
-        print("Object detected in front.")
+        # print("Object detected in front.")
         return True
     else:
-        print("No object detected in front.")
+        # print("No object detected in front.")
         return False
 
 def reposition(agent, obj):
-    speed = 0.01
+    speed = move_speed
     # Assume we have some functions that give us the agent's direction to object and goal
     object_direction = get_direction_to(agent, obj)  # Direction from agent to object
     goal_direction = get_direction_to(agent, goal)      # Direction from agent to goal
@@ -350,7 +353,7 @@ def reposition(agent, obj):
         move_vec *= -1  # Reverse direction if moving clockwise
     
     # Keep distance from object
-    if object_distance > 0.9:
+    if object_distance > 2:
         move_vec += object_vec  # Move towards the object if too far away
 
     # Apply movement to the agent
@@ -359,16 +362,19 @@ def reposition(agent, obj):
     if detect_color_in_front(agent, move_vec):
         og = move_vec
         move_vec = np.array([math.cos(object_direction), -math.sin(object_direction)])
+        move_vec += og
         if clockwise:
             move_vec *= -1  # Reverse direction if moving clockwise
         
         # Keep distance from object
-        if object_distance > 0.9:
+        if object_distance > 2:
             move_vec += og  # Move towards the object if too far away
 
     # Apply movement vector scaled by speed
-    agent.x += move_vec[0] * speed
-    agent.y += move_vec[1] * speed
+    agent.position += move_vec * time.dt * speed
+
+    # agent.x += move_vec[0] * speed
+    # agent.y += move_vec[1] * speed
 
 
 # Dictionary to track how long each agent has reached the payload
@@ -438,7 +444,7 @@ def check_if_agent_turn_goal(agent):
     angle_condition = False
     # if agent.last_goal_payload_angle is not None:
     #     print(agent.last_goal_payload_angle)
-    if agent.last_goal_payload_angle is None or agent.last_goal_payload_angle > 90:
+    if agent.last_goal_payload_angle is None or agent.last_goal_payload_angle > 70:
         angle_condition = True
     if agent.saw_goal_previous == True and angle_condition and closest_entity != "goal":
         agent.color = color.green
@@ -500,12 +506,14 @@ def update():
         if agent.color != color.green:
 
             found_entity, found_entity_position = not_ideal_get_closest_entities(agent, full=True)
+            found_payloads = not_ideal_get_closest_entities(agent, entity_check="payload")
             if found_entity == "goal":
                 agent.saw_goal_previous = True
-                if not_ideal_get_closest_entities(agent, entity_check="payload") == "payload":
+                if found_payloads == "payload":
                     agent.last_goal_payload_angle = get_angle_between_two_points(agent.position, square.position, found_entity_position) 
             else:
                 agent.saw_goal_previous = False
+                # if agent.time_since_last_seen_payload > 5:
                 agent.last_goal_payload_angle = -1               
 
             potential_new_state = "Search"

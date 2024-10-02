@@ -1,4 +1,5 @@
 from ursina import Vec3, time
+import math
 
 def prevent_illegal_agent_movements(agents, square, platform, barriers, barrier_agents):
 
@@ -12,6 +13,7 @@ def prevent_illegal_agent_movements(agents, square, platform, barriers, barrier_
     bottom_square = square.y - square.scale_y / 2
     right_square = square.x + square.scale_x / 2
     left_square = square.x - square.scale_x / 2
+    
 
     # Compute the horizontal and vertical distances between the box and the wall (platform)
     horizontal_distance_right = right_platform - right_square
@@ -72,16 +74,36 @@ def prevent_illegal_agent_movements(agents, square, platform, barriers, barrier_
                 keep_in_bounds(agents, square, platform)
                 avoid_overlaps(agents, square, barriers, barrier_agents)
 
+def get_rotated_corners(square):
+    # Get the half-size of the square (for scaling purposes)
+    half_width = square.scale_x / 2
+    half_height = square.scale_y / 2
+    
+    # Get the square's rotation in radians
+    angle = math.radians(square.rotation_z)  # Assuming rotation_z is in degrees
+    
+    # Calculate the offsets for each corner (relative to the square's center)
+    corners = [
+        Vec3(-half_width, -half_height, 0),  # Bottom-left
+        Vec3(half_width, -half_height, 0),   # Bottom-right
+        Vec3(half_width, half_height, 0),    # Top-right
+        Vec3(-half_width, half_height, 0),   # Top-left
+    ]
+    
+    # Apply rotation to each corner
+    rotated_corners = []
+    for corner in corners:
+        rotated_x = corner.x * math.cos(angle) - corner.y * math.sin(angle)
+        rotated_y = corner.x * math.sin(angle) + corner.y * math.cos(angle)
+        rotated_corners.append(Vec3(rotated_x + square.x, rotated_y + square.y, 0))
+    
+    return rotated_corners
 
 def keep_in_bounds(agents, square, platform):
     ### Used to keep the agents and square within the platform bounds ###
     ### Given list of agents and square, check if they are within the platform bounds and push them back in if they are outside ###
 
     # Get the bounds of the square and the platform
-    top_square = square.y + square.scale_y / 2
-    bottom_square = square.y - square.scale_y / 2
-    right_square = square.x + square.scale_x / 2
-    left_square = square.x - square.scale_x / 2
 
     top_platform = platform.y + platform.scale_y / 2
     bottom_platform = platform.y - platform.scale_y / 2
@@ -104,16 +126,38 @@ def keep_in_bounds(agents, square, platform):
         elif left_agent < left_platform:
             agent.x = left_platform + agent.scale_x / 2
 
-        
-    # Check if the square is outside the platform, if so, push it back in
-    if top_square > top_platform:
-        square.y = top_platform - square.scale_y / 2
-    elif bottom_square < bottom_platform:
-        square.y = bottom_platform + square.scale_y / 2
-    if right_square > right_platform:
-        square.x = right_platform - square.scale_x / 2
-    elif left_square < left_platform:
-        square.x = left_platform + square.scale_x / 2
+    # Get rotated corners of the square
+    corners = get_rotated_corners(square)
+    
+    # Check each corner for out-of-bounds and adjust the square position
+    for corner in corners:
+        if corner.y > top_platform:
+            square.y -= (corner.y - top_platform)
+        elif corner.y < bottom_platform:
+            square.y += (bottom_platform - corner.y)
+        if corner.x > right_platform:
+            square.x -= (corner.x - right_platform)
+        elif corner.x < left_platform:
+            square.x += (left_platform - corner.x)
+
+def keep_not_overlapping(square, barrier):
+    top_barrier = barrier.y + barrier.scale_y / 2
+    bottom_barrier = barrier.y - barrier.scale_y / 2
+    right_barrier = barrier.x + barrier.scale_x / 2
+    left_barrier = barrier.x - barrier.scale_x / 2
+
+    corners = get_rotated_corners(square)
+
+    for corner in corners:
+        if corner.y > top_barrier:
+            square.y -= (corner.y - top_barrier)
+        elif corner.y < bottom_barrier:
+            square.y += (bottom_barrier - corner.y)
+        if corner.x > right_barrier:
+            square.x -= (corner.x - right_barrier)
+        elif corner.x < left_barrier:
+            square.x += (left_barrier - corner.x)
+
 
 def move_agent_to_barrier_edge(barrier, agent):
     # Get the bounds of the barrier and the agent
