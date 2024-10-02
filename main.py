@@ -81,8 +81,8 @@ def create_map(map_id):
 
     elif map_id == 3:
         # Map 3: Two horizontal barriers, one higher than the other, moving in opposite directions
-        barrier1 = Barrier(position=(-2.5, 1, -0.01), scale=(5, 0.5, 0.5), direction=1)
-        barrier2 = Barrier(position=(2.5, -2, -0.01), scale=(5, 0.5, 0.5), direction=-1)
+        barrier1 = Barrier(position=(-1.5, 1, -0.01), scale=(7, 1, 0.5), direction=1)
+        barrier2 = Barrier(position=(1.5, -2, -0.01), scale=(7, 1, 0.5), direction=-1)
 
         barriers.append(barrier1)
         barriers.append(barrier2)
@@ -118,45 +118,12 @@ def create_map(map_id):
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
-create_map(3)
+create_map(1)
 moving_barriers = False
 
 
 ############################################################################################
 
-
-
-def search_cone(agent, target, cone_angle, cone_length, payload=True):
-    ### For a given agent, check if the target is within the cone of vision ###
-    ### Given an agent, target, cone angle, and cone length, return True if the target is within the cone of vision, False otherwise ###
-
-    distance = Vec3(target.x - agent.x, target.y - agent.y, 0).length()
-    detected = False
-
-    if distance < cone_length:
-        # get the lines for the face and the target
-        face_line, target_line = get_face_and_target_lines(agent, target, cone_length)
-        # calculate angle between two lines
-        angle = get_angle_between_two_lines(face_line, target_line)
-        if angle < cone_angle:
-            if payload == True:
-                agent.color = hsv(190, 0.9, 1)
-            detected = True
-            return detected
-    if not detected:
-        agent.color = color.red
-        # rotate the agent 5 degrees
-        new_rotation = (agent.rotation_z + 20) % 360 # keep the rotation within 0-360
-        agent.rotation_z = new_rotation
-        return detected
-
-def search_for_entity(agent, target):
-    # Check for target within cone of vision
-    cone_angle = 40
-    cone_length = 50
-    found = search_cone(agent, target, cone_angle, cone_length)
-
-    return found
 
 def slide_barrier(barrier, barrier_speed, reverse=False):
     # Slide barrier side to side
@@ -196,17 +163,17 @@ def move_agent_to_payload(agent, square, barriers):
 
         return movement
 
-def not_ideal_get_closest_entities(agent, full=False):
+def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
     # Cast ray in direction of goal not in direction of agent facing
     origin = agent.world_position
     origin.z = -0.1
     positions = []
     closest_colors = []
-    search_list = [goal, circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9]
+    search_list = [goal, circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, square]
     search_list.remove(agent)
 
     for other_entity in search_list:
-        if other_entity.color == (0,1,0,1):
+        if other_entity.color == (0,1,0,1) or other_entity.color == (0,0,1,1):
             buffer_value = 0.1
             top_right = (other_entity.x + other_entity.scale_x/2 - buffer_value, other_entity.y + other_entity.scale_y/2 - buffer_value)
             top_left = (other_entity.x - other_entity.scale_x/2 + buffer_value, other_entity.y + other_entity.scale_y/2 - buffer_value)
@@ -238,11 +205,18 @@ def not_ideal_get_closest_entities(agent, full=False):
             return ("goal", positions[0])
         else:
             return (None, None)
-    
-    if (0,1,0,1) in closest_colors:
-        return "goal"
-    else:
-        return None
+        
+    if entity_check == "goal":
+        if (0,1,0,1) in closest_colors:
+            return "goal"
+        else:
+            return None
+        
+    if entity_check == "payload":
+        if (0,0,1,1) in closest_colors:
+            return "payload"
+        else:
+            return None
 
 def move_in_barrier_direction(agent):
     barrier_speed = 0.5
@@ -327,7 +301,7 @@ random_walk_states = {0: False, 1: False, 2: False, 3: False, 4: False}  # Track
 # Global variable to store the current random direction for each agent
 random_walk_directions = {}
 
-def random_walk(agent, agent_id, move_speed=1.0, change_direction_interval=1.0):
+def random_walk(agent, agent_id, move_speed=0.5, change_direction_interval=5.0):
     """
     Move the agent in a random direction, and periodically change the direction.
     
@@ -375,19 +349,22 @@ def move_barriers():
 
 def check_if_agent_turn_goal(agent, distance_threshold = 1):
     closest_entity = not_ideal_get_closest_entities(agent)
-    # if get_distance_between_two_3D_points(square.position, agent.position) > distance_threshold:
-    # if agent.saw_goal_previous == False:
-    #     print("")
-    if agent.saw_goal_previous == True and agent.last_goal_payload_angle is not None and agent.last_goal_payload_angle > 90 and closest_entity != "goal":
+    angle_condition = False
+    if agent.last_goal_payload_angle is None or agent.last_goal_payload_angle > 90:
+        angle_condition = True
+    if agent.saw_goal_previous == True and angle_condition and closest_entity != "goal":
         print("Agent turned into a sub-goal")
         agent.color = color.green
 
 
 def check_if_goal_turn_agent(agent, distance_threshold = 2):
-    if not_ideal_get_closest_entities(agent) == "goal": # Agent sees a goal
+    closest_entity = not_ideal_get_closest_entities(agent)
+    if closest_entity == "goal": # Agent sees a goal
         agent.color = hsv(190, 0.9, 1) # Light blue
-    elif get_distance_between_two_3D_points(square.position, agent.position) < distance_threshold:
+        print("Turned back into an agent since goal is visible")
+    elif get_distance_between_two_3D_points(square.position, agent.position) < distance_threshold and not_ideal_get_closest_entities(agent, entity_check="payload") == "payload":
         agent.color = hsv(190, 0.9, 1) # Light blue
+        print("Turned back into an agent since it's close to the payload")
 
     ### Still have to implement timeout
 
@@ -426,10 +403,11 @@ def update():
                 agent.last_goal_payload_angle = get_angle_between_two_points(agent.position, square.position, found_entity_position)                
 
             potential_new_state = "Search"
-            can_see_payload = search_for_entity(agent, square)
+            can_see_payload = not_ideal_get_closest_entities(agent, entity_check="payload")
             found_entity = not_ideal_get_closest_entities(agent)
             # print(found_entity)
-            if can_see_payload and (found_entity == "goal" or agent.state == "Approach" or agent.state == "Push" or agent.state_time > 600): # Check if the agent has can see the payload within its cone of vision
+            if can_see_payload and (found_entity == "goal" or agent.state == "Approach" or agent.state == "Push" or agent.state_time > 600) == "payload": # Check if the agent can see the payload
+                agent.color = hsv(190, 0.9, 1) # Light blue
                 random_walk_states[index] = False
 
                 potential_new_state = "Approach"
@@ -468,6 +446,9 @@ def update():
                     # Agent has not reached the payload yet so move towards it 
                     ### Move the agent towards the payload ###
                     movement = move_agent_to_payload(agent, square, barriers)
+            else: # Random walk to find payload since can't see it
+                agent.color = color.white
+                random_walk(agent, index)
         else:
             potential_new_state = "Sub-goal"
 
