@@ -27,7 +27,7 @@ camera.orthographic = True
 camera.fov = 10  # Field of view to adjust the zoom level
 
 # Define movement speed of agents
-move_speed = 1.5
+move_speed = 1
 current_map = 0
 
 # Set up timer
@@ -205,15 +205,17 @@ def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
 
     for other_entity in search_list:
         if other_entity.color == (0,1,0,1) or other_entity.color == (0,0,1,1):
-            buffer_value = 0.05
+            buffer_value = 0.1
             top_right = (other_entity.x + other_entity.scale_x/2 - buffer_value, other_entity.y + other_entity.scale_y/2 - buffer_value)
             top_left = (other_entity.x - other_entity.scale_x/2 + buffer_value, other_entity.y + other_entity.scale_y/2 - buffer_value)
             bottom_right = (other_entity.x + other_entity.scale_x/2 - buffer_value, other_entity.y - other_entity.scale_y/2 + buffer_value)
             bottom_left = (other_entity.x - other_entity.scale_x/2 + buffer_value, other_entity.y - other_entity.scale_y/2 + buffer_value)
             corners = [top_right, top_left, bottom_right, bottom_left]
             for corner in corners:
-                # direction_goal = Vec3(other_entity.x - agent.x, other_entity.y - agent.y, 0).normalized()
-                direction_goal = Vec3(corner[0] - agent.x, corner[1] - agent.y, 0).normalized()
+                if other_entity.scale_y < 0.3 and other_entity.scale_x < 0.3:
+                    direction_goal = Vec3(other_entity.x - agent.x, other_entity.y - agent.y, 0).normalized()
+                else:
+                    direction_goal = Vec3(corner[0] - agent.x, corner[1] - agent.y, 0).normalized()
                 to_ignore = [agent]
                 ray = raycast(origin, direction_goal, distance=50, ignore=to_ignore, debug=False)
 
@@ -430,7 +432,7 @@ random_walk_states = {0: False, 1: False, 2: False, 3: False, 4: False}  # Track
 # Global variable to store the current random direction for each agent
 random_walk_directions = {}
 
-def random_walk(agent, agent_id, move_speed=1.5, change_direction_interval=2.0):
+def random_walk(agent, agent_id, move_speed=1, change_direction_interval=2.0):
     """
     Move the agent in a random direction, and periodically change the direction.
     
@@ -538,7 +540,7 @@ def update():
 
             potential_new_state = "Search"
             can_see_payload = not_ideal_get_closest_entities(agent, entity_check="payload")
-            if can_see_payload == "payload" and (agent.saw_goal_previous == True or agent.state == "Approach" or agent.state == "Reposition"): # Check if the agent can see the payload
+            if can_see_payload == "payload" and (agent.saw_goal_previous == True or agent.state == "Approach" or agent.state == "Reposition" or agent.state == "Push"): # Check if the agent can see the payload
                 agent.color = hsv(190, 0.9, 1) # Light blue
                 random_walk_states[index] = False
 
