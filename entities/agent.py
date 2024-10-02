@@ -14,15 +14,7 @@ class Agent(Entity):
         self.state = None
         self.state_time = 0
         self.last_goal_payload_angle = None
-
-         # Create an arrow to indicate the front of the agent
-        self.front_indicator = Entity(
-            parent=self, 
-            model='cube', 
-            color=color.yellow, 
-            scale=(0.5, 0.5, 0.5), 
-            position=(0, 0.5, 1)  # Position the indicator in front of the agent
-        )
+        self.time_since_last_seen_payload = 1000
 
     def update(self):
         self.update_position()  # Update previous position before any movement

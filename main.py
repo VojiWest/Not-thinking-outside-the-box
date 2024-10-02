@@ -27,7 +27,7 @@ camera.orthographic = True
 camera.fov = 10  # Field of view to adjust the zoom level
 
 # Define movement speed of agents
-move_speed = 1
+move_speed = 0.5
 current_map = 0
 
 # Set up timer
@@ -114,17 +114,17 @@ def create_map(map_id):
     circle6 = agent_list[6]
     circle7 = agent_list[7]
     circle8 = agent_list[8]
-    # circle9 = agent_list[9]
-    # circle10 = agent_list[10]
-    # circle11 = agent_list[11]
-    # circle12 = agent_list[12]
-    # circle13 = agent_list[13]
-    # circle14 = agent_list[14]
-    # circle15 = agent_list[15]
-    # circle16 = agent_list[16]
-    # circle17 = agent_list[17]
-    # circle18 = agent_list[18]
-    # circle19 = agent_list[19]
+    circle9 = agent_list[9]
+    circle10 = agent_list[10]
+    circle11 = agent_list[11]
+    circle12 = agent_list[12]
+    circle13 = agent_list[13]
+    circle14 = agent_list[14]
+    circle15 = agent_list[15]
+    circle16 = agent_list[16]
+    circle17 = agent_list[17]
+    circle18 = agent_list[18]
+    circle19 = agent_list[19]
 
     agents.append(circle)
     agents.append(circle1)
@@ -135,21 +135,21 @@ def create_map(map_id):
     agents.append(circle6)
     agents.append(circle7)
     agents.append(circle8)
-    # agents.append(circle9)
-    # agents.append(circle10)
-    # agents.append(circle11)
-    # agents.append(circle12)
-    # agents.append(circle13)
-    # agents.append(circle14)
-    # agents.append(circle15)
-    # agents.append(circle16)
-    # agents.append(circle17)
-    # agents.append(circle18)
-    # agents.append(circle19)
+    agents.append(circle9)
+    agents.append(circle10)
+    agents.append(circle11)
+    agents.append(circle12)
+    agents.append(circle13)
+    agents.append(circle14)
+    agents.append(circle15)
+    agents.append(circle16)
+    agents.append(circle17)
+    agents.append(circle18)
+    agents.append(circle19)
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
-create_map(1)
+create_map(3)
 moving_barriers = False
 
 
@@ -200,7 +200,8 @@ def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
     origin.z = -0.1
     positions = []
     closest_colors = []
-    search_list = [goal, circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, square]
+    search_list = [goal, circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, circle10, 
+                   circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19, square]
     search_list.remove(agent)
 
     for other_entity in search_list:
@@ -218,7 +219,6 @@ def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
                     direction_goal = Vec3(corner[0] - agent.x, corner[1] - agent.y, 0).normalized()
                 to_ignore = [agent]
                 ray = raycast(origin, direction_goal, distance=50, ignore=to_ignore, debug=False)
-
 
                 # Check if the raycast hit an entity
                 found_entity = ray.entity
@@ -241,9 +241,9 @@ def not_ideal_get_closest_entities(agent, entity_check="goal", full=False):
         
     if entity_check == "goal":
         if (0,1,0,1) in closest_colors:
-            return "goal", closest_colors
+            return "goal"
         else:
-            return None, None
+            return None
         
     if entity_check == "payload":
         if (0,0,1,1) in closest_colors:
@@ -273,107 +273,6 @@ def move_in_barrier_direction(agent):
             # Push the agent and the box away from each other
             agent.position += direction * time.dt * 0.5  # Push agent away
             # barrier.position -= direction * time.dt * 0.5    # Push box away
-
-def can_see_goal(agent):
-    # print("checking if goal is visible")
-    detect_green_in_cone_with_visibility(agent)
-    # goal_direction = get_direction_to(agent, goal) 
-    # goal_vec = np.array([math.cos(goal_direction), math.sin(goal_direction)])
-    # hit_info = raycast(agent.position, goal_vec, distance=10, debug=True)
-
-    # if hit_info.hit:
-    #     if hasattr(hit_info.entity, 'model'):  # Check if the detected entity has a color attribute
-    #         detected_color = hit_info.entity.color
-    #         if detected_color != (0,1,0,1):
-    #             pass
-    #             # print(f"Goal not detected")
-    #         else:
-    #             print(f"Goal detected")
-    # else:
-    #     print("No object detected in front.")
-
-def detect_green_in_cone_with_visibility(agent):
-        """Detect if there is a green entity within the vision cone and line of sight."""
-        # print(scene.entities)
-        for entity in scene.entities:
-            # Skip if it's the agent itself or if the entity doesn't have a color
-            if entity == agent or not hasattr(entity, 'color'):
-                continue
-
-            # Check if the entity is green
-            if entity.color == color.green:
-                print("green agent detected")
-                # Get the direction to the entity
-                direction_to_entity = entity.position - agent.position
-                distance_to_entity = direction_to_entity.length()
-
-                # Check if the entity is within the sensor range
-                if distance_to_entity <= 100:
-                    print("green is close enough")
-                    # Normalize the direction vectors
-                    direction_to_entity = direction_to_entity.normalized()
-                    agent_forward = agent.forward.normalized()
-
-                    # Compute the angle between the agent's forward direction and the entity
-                    angle = math.degrees(math.acos(agent_forward.dot(direction_to_entity)))
-
-                    # Check if the entity is within the cone angle
-                    if angle <= 360 / 2:
-                        # Now perform a raycast to check if the entity is visible
-                        if is_entity_visible(agent, entity):
-                            # print("entity is visible")
-                            return True  # Green entity found and visible
-
-        return False  # No green entity detected in the cone and line of sight
-
-def is_entity_visible(agent, entity):
-    """Perform a raycast to check if there is a direct line of sight to the entity."""
-    direction = (entity.position - agent.position).normalized()
-    hit_info = raycast((agent.x, agent.y, 0), direction, distance=50, ignore=[agent], debug=True)
-
-    #  # Visualize the ray
-    # ray_entity = Entity(
-    #     model='cube', 
-    #     scale=(0.05, 0.05, 5), 
-    #     color=color.yellow, 
-    #     position=agent.position, 
-    #     rotation=agent.rotation, 
-    #     origin=(0, 0, 0)  # Extend forward from the agent
-    # )
-    # ray_entity.look_at(entity.position, 'forward')
-
-    # # Make the ray disappear after a short duration
-    # destroy(ray_entity, delay=0.5)
-
-    # Check if the ray hits the entity
-    print(hit_info.entity.color)
-    if hit_info.entity == entity:
-        return True
-    else: 
-        # print(f"Ray hit: {hit_info.entity} but not the target entity.")
-        return False
-
-def detect_color_in_front(agent, direction):
-    # Cast a ray in the direction the agent is facing (self.forward)
-    hit_info = raycast(agent.position, direction, distance=10, debug=True)
-
-    if hit_info.hit:
-        if hasattr(hit_info.entity, 'model'):  # Check if the detected entity has a color attribute
-            detected_color = hit_info.entity.model
-            print(f"Detected object in front with color: {detected_color}")
-    else:
-        print("No object detected in front.")
-
-def detect_color_in_front(agent, direction):
-    # Cast a ray in the direction the agent is facing (self.forward)
-    hit_info = raycast(agent.position, direction, distance=10, debug=True)
-
-    if hit_info.hit:
-        print("Object detected in front.")
-        return True
-    else:
-        print("No object detected in front.")
-        return False
 
 def reposition(agent, obj):
     speed = 0.01
@@ -409,16 +308,7 @@ def reposition(agent, obj):
     # Apply movement to the agent
     # Normalize the movement vector if it's not already
     move_vec = move_vec / np.linalg.norm(move_vec)
-    if detect_color_in_front(agent, move_vec):
-        og = move_vec
-        move_vec = object_vec
-        if clockwise:
-            move_vec *= -1  # Reverse direction if moving clockwise
-        
-        # Keep distance from object
-        if object_distance > 0.9:
-            move_vec += og  # Move towards the object if too far away
-
+    
     # Apply movement vector scaled by speed
     agent.x += move_vec[0] * speed
     agent.y += move_vec[1] * speed
@@ -467,8 +357,9 @@ def move_barriers():
     for barrier in barriers:  # Loop through all barriers in the list
         old_position = barrier.position
         slide_barrier(barrier, barrier_speed)
-        # circle9, circle10, circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19,
-        for entity in [circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8,  square]:
+        
+        for entity in [circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, circle10, 
+                   circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19, square]:
             if entity.intersects(barrier).hit and check_entity_at_barrier_level(entity, barrier):
                 old_distance = get_distance_between_two_3D_points(old_position, entity.position)
                 curr_distance = get_distance_between_two_3D_points(barrier.position, entity.position)
@@ -480,32 +371,101 @@ def move_barriers():
                     break  # Stop further checks once one barrier interaction occurs
 
 
-def check_if_agent_turn_goal(agent, distance_threshold = 1):
-    goal_visible = can_see_goal(agent)
-    closest_entity, others = not_ideal_get_closest_entities(agent)
+def check_if_agent_turn_goal(agent):
+    closest_entity = not_ideal_get_closest_entities(agent)
+
+    closest_entity_payload = not_ideal_get_closest_entities(agent, entity_check="payload")
+    if closest_entity_payload == "payload":
+        agent.time_since_last_seen_payload = 0
+    else:
+        agent.time_since_last_seen_payload += 1
+
+    # if agent.time_since_last_seen_payload > 30:
     angle_condition = False
+    if agent.last_goal_payload_angle is not None:
+        print(agent.last_goal_payload_angle)
     if agent.last_goal_payload_angle is None or agent.last_goal_payload_angle > 90:
         angle_condition = True
-    if agent.saw_goal_previous == True and angle_condition and not goal_visible:
-        print("Closest entity: ", closest_entity, "Others: ", others)
-        print("Agent turned into a sub-goal")
+    if agent.saw_goal_previous == True and angle_condition and closest_entity != "goal":
         agent.color = color.green
 
-def check_if_goal_turn_agent(agent, distance_threshold = 2):
+def check_if_goal_turn_agent(agent, distance_threshold = 5):
     closest_entity = not_ideal_get_closest_entities(agent)
+    closest_entity_payload = not_ideal_get_closest_entities(agent, entity_check="payload")
+    if closest_entity_payload == "payload":
+        agent.time_since_last_seen_payload = 0
+    else:
+        agent.time_since_last_seen_payload += 1
+
     if closest_entity == "goal": # Agent sees a goal
         agent.color = hsv(190, 0.9, 1) # Light blue
-        print("Turned back into an agent since goal is visible")
-    elif get_distance_between_two_3D_points(square.position, agent.position) < distance_threshold and not_ideal_get_closest_entities(agent, entity_check="payload") == "payload":
+    elif get_distance_between_two_3D_points(square.position, agent.position) < distance_threshold and agent.time_since_last_seen_payload < 200:
         agent.color = hsv(190, 0.9, 1) # Light blue
-        print("Turned back into an agent since it's close to the payload")
-
-    ### Still have to implement timeout
+    elif agent.state_time > 600:
+        agent.color = hsv(190, 0.9, 1) # Light blue
 
 def at_payload(agent, distance_threshold = 0.05):
     if get_distance_between_two_3D_points(agent.position, square.position) < distance_threshold:
         return True
     return False
+def detect_color_in_front(agent, direction):
+    # Cast a ray in the direction the agent is facing (self.forward)
+    hit_info = raycast(agent.position, direction, distance=10, debug=True)
+
+    if hit_info.hit:
+        print("Object detected in front.")
+        return True
+    else:
+        print("No object detected in front.")
+        return False
+
+def reposition(agent, obj):
+    speed = 0.01
+    # Assume we have some functions that give us the agent's direction to object and goal
+    object_direction = get_direction_to(agent, obj)  # Direction from agent to object
+    goal_direction = get_direction_to(agent, goal)      # Direction from agent to goal
+    
+    # Calculate difference between the object's direction and goal's direction
+    diff = object_direction - goal_direction
+    diff = (diff + 2 * math.pi) % (2 * math.pi)  # Normalize angle difference to [0, 2*pi)
+    
+    # Determine whether to move clockwise or counterclockwise
+    clockwise = diff >= math.pi
+    
+    # Parameters for movement vector
+    min_dist = 0.1  # Minimum distance from object
+    max_dist = 0.25  # Maximum distance from object
+    
+    # Get the current distance of the agent from the object
+    object_distance = get_distance(agent, obj)
+    
+    # Force field around the object (we move perpendicular to the object vector)
+    object_vec = np.array([math.cos(object_direction), math.sin(object_direction)])  # Convert object direction to a vector
+    move_vec = np.array([-object_vec[1], object_vec[0]])  # Perpendicular vector for moving around
+    
+    if clockwise:
+        move_vec *= -1  # Reverse direction if moving clockwise
+    
+    # Keep distance from object
+    if object_distance > 0.9:
+        move_vec += object_vec  # Move towards the object if too far away
+
+    # Apply movement to the agent
+    # Normalize the movement vector if it's not already
+    move_vec = move_vec / np.linalg.norm(move_vec)
+    if detect_color_in_front(agent, move_vec):
+        og = move_vec
+        move_vec = np.array([math.cos(object_direction), -math.sin(object_direction)])
+        if clockwise:
+            move_vec *= -1  # Reverse direction if moving clockwise
+        
+        # Keep distance from object
+        if object_distance > 0.9:
+            move_vec += og  # Move towards the object if too far away
+
+    # Apply movement vector scaled by speed
+    agent.x += move_vec[0] * speed
+    agent.y += move_vec[1] * speed
 
 # Update function called every frame
 def update():
@@ -513,8 +473,9 @@ def update():
     update_timing(start_time, time_limit, square, goal)
     
     agent_targets = {}
-    # , circle9, circle10, circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19
-    for index, agent in enumerate([circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8]):
+
+    for index, agent in enumerate([circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, circle10, 
+                   circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19]):
         potential_new_state = None
          # If the agent is in random walk mode, make it do random walk
         # if random_walk_states[index]:
@@ -522,11 +483,11 @@ def update():
             # continue  # Skip the rest of the loop if the agent is in random walk mode
 
         # McRae stuff
-        if not reach_payload(agent, square):
-            if agent.color != color.green:
-                check_if_agent_turn_goal(agent)
-            else:
-                check_if_goal_turn_agent(agent)
+        # if not reach_payload(agent, square):
+        if agent.color != color.green:
+            check_if_agent_turn_goal(agent)
+        else:
+            check_if_goal_turn_agent(agent)
 
         # Check if the agent is not a sub-goal
         if agent.color != color.green:
@@ -535,19 +496,21 @@ def update():
             if found_entity == "goal":
                 agent.saw_goal_previous = True
                 if not_ideal_get_closest_entities(agent, entity_check="payload") == "payload":
-                    # print("Updating Angle")
-                    agent.last_goal_payload_angle = get_angle_between_two_points(agent.position, square.position, found_entity_position)                
+                    agent.last_goal_payload_angle = get_angle_between_two_points(agent.position, square.position, found_entity_position) 
+            else:
+                agent.saw_goal_previous = False
+                agent.last_goal_payload_angle = None               
 
             potential_new_state = "Search"
             can_see_payload = not_ideal_get_closest_entities(agent, entity_check="payload")
             if can_see_payload == "payload" and (agent.saw_goal_previous == True or agent.state == "Approach" or agent.state == "Reposition" or agent.state == "Push"): # Check if the agent can see the payload
                 agent.color = hsv(190, 0.9, 1) # Light blue
+
                 random_walk_states[index] = False
 
                 potential_new_state = "Approach"
                 reached = reach_payload(agent, square) # Check if agent reached near the payload
                 if reached:
-                    print(f"agent {index} payload reached")
                     # Increment the timer for the agent if it's at the payload
                     # reach_timers[index] += time.dt  # Increment by delta time (time between frames)
                     
@@ -556,8 +519,8 @@ def update():
                     #     random_walk_states[index] = True  # Set random walk mode
                     #     continue  # Skip the rest of the loop for this agent
 
-                    
-                    if found_entity != "goal" and at_payload(agent, distance_threshold=1) and agent.state_time < 600: # Goal is occluded
+                    found_entity = not_ideal_get_closest_entities(agent)
+                    if found_entity != "goal" and at_payload(agent, distance_threshold=9) and agent.state_time < 600: # Goal is occluded
                         potential_new_state = "Push"
                         movement = move_agent_to_payload(agent, square, barriers)
                         agent.saw_goal_previous = False
@@ -571,7 +534,6 @@ def update():
                         agent.color = hsv(56, 1, 1) # Yellow
                         
                 else:  
-                    # print(f"agent {index} moving to payload")
                     # If agent can't see the payload, reset its timer
                     # reach_timers[index] = 0
                     # Agent has not reached the payload yet so move towards it 
