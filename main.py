@@ -23,7 +23,7 @@ camera.fov = 10  # Field of view to adjust the zoom level
 
 # Define movement speed of agents
 move_speed = 0.5
-current_map = 0
+current_map = 1
 
 # Set up timer
 start_time = time.time()
@@ -117,7 +117,7 @@ def create_map(map_id):
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
-create_map(4)
+create_map(2)
 moving_barriers = False
 
 
@@ -445,7 +445,6 @@ def move_in_barrier_direction(agent):
             # barrier.position -= direction * time.dt * 0.5    # Push box away
 
 def reposition(agent, obj):
-    speed = 0.01
     # Assume we have some functions that give us the agent's direction to object and goal
     object_direction = get_direction_to(agent, obj)  # Direction from agent to object
     goal_direction = get_direction_to(agent, goal)      # Direction from agent to goal
@@ -467,21 +466,44 @@ def reposition(agent, obj):
     # Force field around the object (we move perpendicular to the object vector)
     object_vec = np.array([math.cos(object_direction), math.sin(object_direction)])  # Convert object direction to a vector
     move_vec = np.array([-object_vec[1], object_vec[0]])  # Perpendicular vector for moving around
-    
     if clockwise:
         move_vec *= -1  # Reverse direction if moving clockwise
     
-    # Keep distance from object
-    if object_distance > 0.2:
-        move_vec += object_vec  # Move towards the object if too far away
+    move_vec += object_vec  # Move towards the object if too far away
 
     # Apply movement to the agent
     # Normalize the movement vector if it's not already
     move_vec = move_vec / np.linalg.norm(move_vec)
     
-    # Apply movement vector scaled by speed
-    agent.x += move_vec[0] * speed
-    agent.y += move_vec[1] * speed
+    # Should move around another agent if it is in its way
+    for other_agent in agents:
+        if agent != other_agent:  
+            other_agent_direction = get_direction_to(agent, other_agent)
+            other_agent_vec = np.array([math.cos(other_agent_direction), math.sin(other_agent_direction)])
+            norm_other_agent_vec = other_agent_vec / np.linalg.norm(other_agent_vec)
+            rounded_other_agent_vec = (norm_other_agent_vec*100).astype(int)
+            rounded_move_vec = (move_vec*100).astype(int)
+            comparison = rounded_other_agent_vec == rounded_move_vec
+            equal_arrays = comparison.all()
+            if equal_arrays:
+                print("object:", rounded_other_agent_vec)
+                print("target:", rounded_move_vec)
+                print("object in the way")
+                move_vec = np.array([-other_agent_vec[1], -other_agent_vec[0]])
+
+    move_vec = move_vec / np.linalg.norm(move_vec)
+    move_vec += object_vec  # Move towards the object if too far away
+
+    if clockwise:
+        move_vec *= -1  # Reverse direction if moving clockwise
+
+    agent.position += move_vec * time.dt * move_speed  # Move the agent towards the payload
+
+    #face object
+    object_direction = get_direction_to(agent, obj)  # Direction from agent to object
+    angle_to_object = math.degrees(object_direction)
+    agent.rotation_y += angle_to_object
+
 
 
 # Dictionary to track how long each agent has reached the payload
@@ -555,16 +577,18 @@ def check_if_goal_turn_agent(agent, distance_threshold = 1):
 
     ### Still have to implement timeout
 
-def at_payload(agent, distance_threshold = 0.05):
+def at_payload(agent, distance_threshold = 0.01):
+    # print(get_distance_between_two_3D_points(agent.position, square.position))
     if get_distance_between_two_3D_points(agent.position, square.position) < distance_threshold:
         return True
     return False
 
 # Update function called every frame
 def update():
+    MacRae = False
     # Check if the square (payload) has reached the goal
     time_elapsed = time.time() - start_time
-    print("Time Elapsed: ", round(time_elapsed, 2))
+    # print("Time Elapsed: ", round(time_elapsed, 2))
 
     if square.intersects(goal).hit:
         print("Success! Payload reached the goal in", round(time_elapsed, 2), "seconds.")
@@ -578,17 +602,17 @@ def update():
 
     for index, agent in enumerate([circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9]):
         potential_new_state = None
-         # If the agent is in random walk mode, make it do random walk
-        # if random_walk_states[index]:
-        #     random_walk(agent, index)  # Call your random walk function here
-            # continue  # Skip the rest of the loop if the agent is in random walk mode
+       
+        if agent.state == "Search":
+            random_walk(agent, "agent"+str(index))
 
         # McRae stuff
-        if not reach_payload(agent, square):
-            if agent.color != color.green:
-                check_if_agent_turn_goal(agent)
-            else:
-                check_if_goal_turn_agent(agent)
+        if MacRae:
+            if not reach_payload(agent, square):
+                if agent.color != color.green:
+                    check_if_agent_turn_goal(agent)
+                else:
+                    check_if_goal_turn_agent(agent)
 
         # Check if the agent is not a sub-goal
         if agent.color != color.green:
@@ -606,21 +630,21 @@ def update():
                 potential_new_state = "Approach"
                 reached = reach_payload(agent, square) # Check if agent reached near the payload
                 if reached:
-                    # Increment the timer for the agent if it's at the payload
-                    # reach_timers[index] += time.dt  # Increment by delta time (time between frames)
-                    
-                    # if reach_timers[index] >= reach_threshold:
-                    #     print(f"Agent {index} is starting random walk after 10 seconds at the payload.")
-                    #     random_walk_states[index] = True  # Set random walk mode
-                    #     continue  # Skip the rest of the loop for this agent
-
                     found_entity = not_ideal_get_closest_entities(agent)
                     if found_entity != "goal" and at_payload(agent, distance_threshold=0.8) and agent.state_time < 600: # Goal is occluded
+                        if agent.state == "Reposition":
+                            print("switching to push")
                         potential_new_state = "Push"
                         movement = move_agent_to_payload(agent, square, barriers)
                         agent.saw_goal_previous = False
                     else:
-                        potential_new_state = "Repoisition"
+                        if not found_entity:
+                            print(f"Agent {index} repositioning due to: found entity")
+                        if not at_payload(agent, distance_threshold=0.8):
+                            print(f"Agent {index} repositioning due to: at payload")
+                        if agent.state_time > 600:
+                            print(f"Agent {index} repositioning due to: state timer")
+                        potential_new_state = "Reposition"
                         # If agent hasn't reached the payload, reset its timer
                         # reach_timers[index] = 0
 
@@ -632,16 +656,13 @@ def update():
                         agent.saw_goal_previous = True
                         
                 else:  
-                    # If agent can't see the payload, reset its timer
-                    # reach_timers[index] = 0
-                    # Agent has not reached the payload yet so move towards it 
-                    ### Move the agent towards the payload ###
                     movement = move_agent_to_payload(agent, square, barriers)
         else:
-            potential_new_state = "Sub-goal"
+            if MacRae:
+                potential_new_state = "Sub-goal"
 
         if potential_new_state != agent.state:
-            # print(f"Agent {index} transitioning from {agent.state} to {potential_new_state} -- {agent.state_time}")
+            print(f"Agent {index} transitioning from {agent.state} to {potential_new_state} -- {agent.state_time}")
             agent.state = potential_new_state
             agent.state_time = 0
         else:
