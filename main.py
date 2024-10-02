@@ -118,7 +118,7 @@ def create_map(map_id):
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
-create_map(1)
+create_map(3)
 moving_barriers = False
 
 
@@ -267,6 +267,17 @@ def move_in_barrier_direction(agent):
             agent.position += direction * time.dt * 0.5  # Push agent away
             # barrier.position -= direction * time.dt * 0.5    # Push box away
 
+def detect_color_in_front(agent, direction):
+    # Cast a ray in the direction the agent is facing (self.forward)
+    hit_info = raycast(agent.position, direction, distance=10, debug=True)
+
+    if hit_info.hit:
+        if hasattr(hit_info.entity, 'model'):  # Check if the detected entity has a color attribute
+            detected_color = hit_info.entity.model
+            print(f"Detected object in front with color: {detected_color}")
+    else:
+        print("No object detected in front.")
+
 def reposition(agent, obj):
     speed = 0.01
     # Assume we have some functions that give us the agent's direction to object and goal
@@ -301,7 +312,8 @@ def reposition(agent, obj):
     # Apply movement to the agent
     # Normalize the movement vector if it's not already
     move_vec = move_vec / np.linalg.norm(move_vec)
-    
+    detect_color_in_front(agent, move_vec)
+
     # Apply movement vector scaled by speed
     agent.x += move_vec[0] * speed
     agent.y += move_vec[1] * speed
@@ -415,13 +427,15 @@ def update():
 
             potential_new_state = "Search"
             can_see_payload = search_for_entity(agent, square)
-            if can_see_payload: # Check if the agent has can see the payload within its cone of vision
-
+            found_entity = not_ideal_get_closest_entities(agent)
+            # print(found_entity)
+            if can_see_payload and (found_entity == "goal" or agent.state == "Approach" or agent.state == "Push" or agent.state_time > 600): # Check if the agent has can see the payload within its cone of vision
                 random_walk_states[index] = False
 
                 potential_new_state = "Approach"
                 reached = reach_payload(agent, square) # Check if agent reached near the payload
                 if reached:
+                    print(f"agent {index} payload reached")
                     # Increment the timer for the agent if it's at the payload
                     # reach_timers[index] += time.dt  # Increment by delta time (time between frames)
                     
@@ -430,13 +444,13 @@ def update():
                     #     random_walk_states[index] = True  # Set random walk mode
                     #     continue  # Skip the rest of the loop for this agent
 
-                    found_entity = not_ideal_get_closest_entities(agent)
-                    if found_entity != "goal" and at_payload(agent, distance_threshold=0.9) and agent.state_time < 600: # Goal is occluded
+                    
+                    if found_entity != "goal" and at_payload(agent, distance_threshold=1) and agent.state_time < 600: # Goal is occluded
                         potential_new_state = "Push"
                         movement = move_agent_to_payload(agent, square, barriers)
                         agent.saw_goal_previous = False
                     else:
-                        potential_new_state = "Repoisition"
+                        potential_new_state = "Reposition"
                         # If agent hasn't reached the payload, reset its timer
                         # reach_timers[index] = 0
 
@@ -448,6 +462,7 @@ def update():
                         agent.saw_goal_previous = True
                         
                 else:  
+                    print(f"agent {index} moving to payload")
                     # If agent can't see the payload, reset its timer
                     # reach_timers[index] = 0
                     # Agent has not reached the payload yet so move towards it 
@@ -457,7 +472,7 @@ def update():
             potential_new_state = "Sub-goal"
 
         if potential_new_state != agent.state:
-            # print(f"Agent {index} transitioning from {agent.state} to {potential_new_state} -- {agent.state_time}")
+            print(f"Agent {index} transitioning from {agent.state} to {potential_new_state} -- {agent.state_time}")
             agent.state = potential_new_state
             agent.state_time = 0
         else:
