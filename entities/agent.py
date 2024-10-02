@@ -7,7 +7,7 @@ class Agent(Entity):
             color=color.white,
             scale=scale,
             position=position,
-            collider='sphere'
+            collider='box'
         )
         self.previous_position = self.position  # Initialize previous_position
         self.saw_goal_previous = False
