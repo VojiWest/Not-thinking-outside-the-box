@@ -1,5 +1,5 @@
 import math
-from ursina import Vec3
+from ursina import Vec3, Vec2
 
 def get_angle_between_two_lines(line1, line2):
     # Line 1 vector (from point1 to point2)
@@ -101,3 +101,12 @@ def get_distance(agent, obj):
     
     # Return the Euclidean distance
     return math.sqrt(dx**2 + dy**2)
+
+
+def get_angle_between_two_points(origin_pos, target_pos1, target_pos2):
+    vector1 = Vec2(target_pos1.x - origin_pos.x, target_pos1.y - origin_pos.y)
+    vector2 = Vec2(target_pos2.x - origin_pos.x, target_pos2.y - origin_pos.y)
+
+    angle = math.degrees(math.acos(vector1.dot(vector2) / (vector1.length() * vector2.length() + 0.0001)))
+
+    return angle

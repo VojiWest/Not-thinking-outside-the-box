@@ -13,6 +13,7 @@ class Agent(Entity):
         self.saw_goal_previous = False
         self.state = None
         self.state_time = 0
+        self.last_goal_payload_angle = None
 
     def update(self):
         self.update_position()  # Update previous position before any movement
