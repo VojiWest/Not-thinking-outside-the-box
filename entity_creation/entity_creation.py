@@ -68,7 +68,7 @@ def create_positions(barriers, goal, square, grid_size=10, grid_resolution=0.5):
 
 
 def create_agents_goal_and_payload(barriers, map_id):
-    agent_size = 0.15
+    agent_size = 0.2
 
     if map_id == 3:
         goal = Goal(position=(3, -3.5, -0.01), scale=(1,1))
