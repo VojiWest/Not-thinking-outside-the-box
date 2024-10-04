@@ -141,22 +141,23 @@ def keep_in_bounds(agents, square, platform):
             square.x += (left_platform - corner.x)
 
 def keep_not_overlapping(square, barrier):
+    # Get the barrier's bounds
     top_barrier = barrier.y + barrier.scale_y / 2
     bottom_barrier = barrier.y - barrier.scale_y / 2
     right_barrier = barrier.x + barrier.scale_x / 2
     left_barrier = barrier.x - barrier.scale_x / 2
 
+    # Get the corners of the rotated square
     corners = get_rotated_corners(square)
-
+    print("Checking for overlap")
+    
+    # Check each corner if it overlaps with the barrier and adjust the square position
     for corner in corners:
-        if corner.y > top_barrier:
-            square.y -= (corner.y - top_barrier)
-        elif corner.y < bottom_barrier:
-            square.y += (bottom_barrier - corner.y)
-        if corner.x > right_barrier:
-            square.x -= (corner.x - right_barrier)
-        elif corner.x < left_barrier:
-            square.x += (left_barrier - corner.x)
+        # get closest point on the barrier to the corner
+        dist_to_top = abs(top_barrier - corner.y)
+        dist_to_bottom = abs(bottom_barrier - corner.y)
+        dist_to_left = abs(left_barrier - corner.x)
+        dist_to_right = abs(right_barrier - corner.x)
 
 
 def move_agent_to_barrier_edge(barrier, agent):

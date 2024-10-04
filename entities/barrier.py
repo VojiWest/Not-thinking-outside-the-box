@@ -12,6 +12,7 @@ class Barrier(Entity):
             collider='box'
         )
         self.direction = direction
+        self.time_in_direction = 0
 
     def update_direction(self):
         # Reverse the direction of the barrier when the update is called

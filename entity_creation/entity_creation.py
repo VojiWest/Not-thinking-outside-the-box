@@ -53,7 +53,6 @@ def create_positions(barriers, goal, square, grid_size=10, grid_resolution=0.5):
 
     # Randomly generate positions for agents
     for p in range(21):
-        print("Finding position for agent", p)
         works = False
         while not works:
             i = random.uniform(-5.0, 5.0)

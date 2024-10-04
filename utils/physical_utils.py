@@ -1,15 +1,10 @@
 from ursina import Vec3
 
-def check_entity_at_barrier_level(entity, barrier, thershold=0.05):
-    top_barrier = barrier.y + barrier.scale_y / 2
-    bottom_barrier = barrier.y - barrier.scale_y / 2
+def check_entity_at_barrier_level(entity, barrier, thershold=0.0):
+    # Check if the entity is at the same level as the barrier
 
-    top_entity = entity.y + entity.scale_y / 2
-    bottom_entity = entity.y - entity.scale_y / 2
-
-    if bottom_entity * (1 + thershold) < top_barrier or top_entity > bottom_barrier * (1 + thershold):
+    if abs(entity.y - barrier.y) < barrier.scale_y / 2 + thershold:
         return True
-    return False
 
 
 def reach_payload(agent, payload, threshold = 1):

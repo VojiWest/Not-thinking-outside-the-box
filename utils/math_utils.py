@@ -110,3 +110,146 @@ def get_angle_between_two_points(origin_pos, target_pos1, target_pos2):
     angle = math.degrees(math.acos(vector1.dot(vector2) / (vector1.length() * vector2.length() + 0.0001)))
 
     return angle
+
+def check_if_entities_intersect(entity1, entity2):
+    """
+    Check if two entities intersect using Separating Axis Theorem (SAT).
+    :param entity1: The first entity (rotated square or rectangle).
+    :param entity2: The second entity (rotated square or rectangle).
+    :return: True if the entities intersect, False otherwise.
+    """
+    # Get the corners of both entities
+    corners1 = get_rotated_corners(entity1)
+    corners2 = get_rotated_corners(entity2)
+
+    # print(corners1, " --- ", corners2)
+
+    # Get the edges (normals) of both entities
+    edges1 = get_edges(corners1)
+    edges2 = get_edges(corners2)
+
+    # Check for separating axis on all edges of entity1
+    for edge in edges1:
+        if is_separating_axis(edge, corners1, corners2):
+            return False  # If a separating axis is found, they don't intersect
+
+    # Check for separating axis on all edges of entity2
+    for edge in edges2:
+        if is_separating_axis(edge, corners1, corners2):
+            return False  # If a separating axis is found, they don't intersect
+
+    # No separating axis found, the entities intersect
+    return True
+
+def get_rotated_corners(entity):
+    # Assuming rotation around z-axis in a 2D plane
+    angle_rad = math.radians(entity.rotation.z)  # Use the z-component for rotation
+    
+    half_width = entity.scale_x / 2
+    half_height = entity.scale_y / 2
+
+    # Define the four corners relative to the center of the entity
+    corners = [
+        Vec3(-half_width, -half_height, 0),
+        Vec3(half_width, -half_height, 0),
+        Vec3(half_width, half_height, 0),
+        Vec3(-half_width, half_height, 0),
+    ]
+
+    # Apply rotation to each corner
+    rotated_corners = []
+    for corner in corners:
+        rotated_x = corner.x * math.cos(angle_rad) - corner.y * math.sin(angle_rad)
+        rotated_y = corner.x * math.sin(angle_rad) + corner.y * math.cos(angle_rad)
+        rotated_corners.append(Vec3(rotated_x + entity.x, rotated_y + entity.y, 0))  # Translate back to entity's position
+
+    return rotated_corners
+
+
+def get_edges(corners):
+    """
+    Get the edges of the rectangle (the vectors between consecutive corners).
+    :param corners: List of Vec3 representing the rectangle's corners.
+    :return: List of edge vectors (Vec3).
+    """
+    edges = []
+    for i in range(len(corners)):
+        p1 = corners[i]
+        p2 = corners[(i + 1) % len(corners)]
+        edge = Vec3(p2.x - p1.x, p2.y - p1.y, 0)
+        edges.append(edge)
+    return edges
+
+
+def is_separating_axis(edge, corners1, corners2):
+    """
+    Check if an edge is a separating axis between two sets of corners.
+    :param edge: The edge vector.
+    :param corners1: Corners of the first entity.
+    :param corners2: Corners of the second entity.
+    :return: True if the edge is a separating axis, False otherwise.
+    """
+    # Compute the normal of the edge (perpendicular vector)
+    normal = Vec3(-edge.y, edge.x, 0)
+
+    # Project corners of both entities onto the normal
+    min_proj1, max_proj1 = project_onto_axis(normal, corners1)
+    min_proj2, max_proj2 = project_onto_axis(normal, corners2)
+
+    # Check if projections are disjoint (i.e., if there is a gap between them)
+    if max_proj1 < min_proj2 or max_proj2 < min_proj1:
+        return True  # A gap exists, so this is a separating axis
+
+    return False  # No gap, not a separating axis
+
+
+def project_onto_axis(axis, corners):
+    """
+    Project the corners of a rectangle onto an axis (normal) and find the min and max projections.
+    :param axis: The axis to project onto.
+    :param corners: The corners of the rectangle.
+    :return: The minimum and maximum projection values.
+    """
+    min_proj = float('inf')
+    max_proj = float('-inf')
+    for corner in corners:
+        projection = corner.x * axis.x + corner.y * axis.y
+        min_proj = min(min_proj, projection)
+        max_proj = max(max_proj, projection)
+    return min_proj, max_proj
+
+
+def project_onto_vector(v1, v2):
+    """Project vector v1 onto v2."""
+    v2_normalized = v2.normalized()
+    return v2_normalized * (v1.dot(v2_normalized))
+
+def remove_movement_towards_barrier(square, movement, barrier):
+    # Get the nearest edge's normal vector of the barrier (simplified for axis-aligned barriers)
+    nearest_normal = Vec3(0, 0, 0)  # This will hold the normal of the nearest edge
+
+    # Calculate barrier edges
+    top_barrier = barrier.y + barrier.scale_y / 2
+    bottom_barrier = barrier.y - barrier.scale_y / 2
+    right_barrier = barrier.x + barrier.scale_x / 2
+    left_barrier = barrier.x - barrier.scale_x / 2
+
+    # Get the closest side and the normal vector
+    if square.y + square.scale_y/2 > top_barrier:
+        nearest_normal = Vec3(0, 1, 0)  # Top edge: normal points up
+    elif square.y - square.scale_y/2 < bottom_barrier:
+        nearest_normal = Vec3(0, -1, 0)  # Bottom edge: normal points down
+    if square.x - square.scale_x/2> right_barrier:
+        nearest_normal = Vec3(1, 0, 0)  # Right edge: normal points right
+    elif square.x + square.scale_x/2< left_barrier:
+        nearest_normal = Vec3(-1, 0, 0)  # Left edge: normal points left
+
+    # Project the movement vector onto the nearest edge's normal vector
+    movement_towards_barrier = project_onto_vector(movement, nearest_normal)
+
+    # Subtract the movement in the direction of the barrier's normal (keep perpendicular component)
+    adjusted_movement = movement - movement_towards_barrier
+
+    # Apply the remaining movement (which won't intersect with the barrier)
+    square.position += adjusted_movement
+    return adjusted_movement
