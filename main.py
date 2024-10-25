@@ -45,7 +45,7 @@ agents = []
 barrier_agents = []
 
 modes = ["CEPtors", "McRae", "Chen"]
-mode = modes[0]
+mode = modes[2]
 
 
 # Function to create maps and entities
@@ -74,8 +74,10 @@ def create_map(map_id):
 
     elif map_id == 2:
         # Map 2: Two vertical barriers moving in opposite directions
-        barrier1 = Barrier(position=(0, 4, -0.01), scale=(0.5, 4, 0.5), direction=1)
-        barrier2 = Barrier(position=(0, -4, -0.01), scale=(0.5, 4, 0.5), direction=-1)
+        # barrier1 = Barrier(position=(0, 4, -0.01), scale=(0.5, 4, 0.5), direction=1)
+        # barrier2 = Barrier(position=(0, -4, -0.01), scale=(0.5, 4, 0.5), direction=-1)
+        barrier1 = Barrier(position=(-100, -200, -0.01), scale=(0.5, 4, 0.5), direction=1)
+        barrier2 = Barrier(position=(-150, -200, -0.01), scale=(0.5, 4, 0.5), direction=1)
 
         barriers.append(barrier1)
         barriers.append(barrier2)
@@ -151,7 +153,7 @@ def create_map(map_id):
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
-create_map(4)
+create_map(0)
 moving_barriers = True
 
 
