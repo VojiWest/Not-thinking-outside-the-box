@@ -1,4 +1,4 @@
-from ursina import Entity, color
+from ursina import Entity, color, hsv
 
 
 class Platform(Entity):
@@ -6,7 +6,7 @@ class Platform(Entity):
         super().__init__(
             model='quad',
             scale=(10, 10),
-            color=color.pink,
+            color=hsv(343, 0.40, 1),
             position=(0, 0, 1),
             texture='white_cube',
             collider='box'
