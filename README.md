@@ -1,1 +1,3 @@
 # Not-thinking-outside-the-box
+
+This code simulates swarm agents pushing a payload to a goal. This can be tested with non sub-goal forming agents and sub-goal forming agents, as well as in environments with dynamic or static obstacles. To run the code run the "main.py" file. The type of agents can be set by the variable 'mode'. The map can be selected by choosing the map index (0-4) in 'create_map('map index')' and the obstacles can be set to be dynamic in movement by setting "moving_barriers = True".

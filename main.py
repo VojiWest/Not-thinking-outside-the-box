@@ -2,7 +2,12 @@ from ursina import *
 import math
 import time
 import numpy as np
+import imageio
+import os
 from random import uniform
+
+from ursina.prefabs.video_recorder import VideoRecorder
+
 
 from entities.platform import Platform
 from entities.barrier import Barrier
@@ -74,10 +79,10 @@ def create_map(map_id):
 
     elif map_id == 2:
         # Map 2: Two vertical barriers moving in opposite directions
-        # barrier1 = Barrier(position=(0, 4, -0.01), scale=(0.5, 4, 0.5), direction=1)
-        # barrier2 = Barrier(position=(0, -4, -0.01), scale=(0.5, 4, 0.5), direction=-1)
-        barrier1 = Barrier(position=(-100, -200, -0.01), scale=(0.5, 4, 0.5), direction=1)
-        barrier2 = Barrier(position=(-150, -200, -0.01), scale=(0.5, 4, 0.5), direction=1)
+        barrier1 = Barrier(position=(0, 4, -0.01), scale=(0.5, 4, 0.5), direction=1)
+        barrier2 = Barrier(position=(0, -4, -0.01), scale=(0.5, 4, 0.5), direction=-1)
+        # barrier1 = Barrier(position=(-100, -200, -0.01), scale=(0.5, 4, 0.5), direction=1)
+        # barrier2 = Barrier(position=(-150, -200, -0.01), scale=(0.5, 4, 0.5), direction=1)
 
         barriers.append(barrier1)
         barriers.append(barrier2)
@@ -153,8 +158,9 @@ def create_map(map_id):
 
 #### ENTER THE INDEX OF MAP YOU WANT HERE, AND IF YOU WANT MOVING BARRIERS ####
 
-create_map(0)
+create_map(3)
 moving_barriers = True
+
 
 
 ############################################################################################
@@ -508,8 +514,6 @@ def at_payload(agent, distance_threshold = 0.05):
 def update():
     # Check if the square (payload) has reached the goal
     update_timing(start_time, time_limit, square, goal)
-    
-    agent_targets = {}
 
     for index, agent in enumerate([circle, circle1, circle2, circle3, circle4, circle5, circle6, circle7, circle8, circle9, circle10, 
                    circle11, circle12, circle13, circle14, circle15, circle16, circle17, circle18, circle19]):
